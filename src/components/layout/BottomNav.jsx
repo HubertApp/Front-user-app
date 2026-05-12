@@ -3,7 +3,7 @@ import HubertLogo from '../ui/HubertLogo';
 
 const navItems = [
   { to: '/', label: "Let's move", icon: 'fa-solid fa-route' },
-  { to: '/favoris', label: 'Favoris', icon: 'fa-solid fa-star' },
+  { to: '/favoris', label: 'Favoris', icon: 'fa-solid fa-heart' },
   { to: '/compte', label: 'Compte', icon: 'fa-solid fa-user' },
 ];
 

@@ -5,6 +5,12 @@ import AutocompleteItem from '../components/search/AutocompleteItem';
 import ItineraryStep from '../components/itinerary/ItineraryStep';
 import { autocompleteResults, savedPlaces, itinerarySteps } from '../data/mock';
 
+function StopDot({ idx, total }) {
+  if (idx === 0)         return <div className="w-2.5 h-2.5 rounded-full bg-teal shrink-0" />;
+  if (idx === total - 1) return <div className="w-2.5 h-2.5 rounded-sm bg-[#0f172a] shrink-0" />;
+  return <div className="w-2 h-2 rounded-full bg-white ring-2 ring-teal shrink-0" />;
+}
+
 function DestinationSearch({ query, onChange, onSelectSaved, onSelectResult }) {
   const showAutocomplete = query.length > 0;
 
@@ -59,48 +65,139 @@ function DestinationSearch({ query, onChange, onSelectSaved, onSelectResult }) {
   );
 }
 
-function RouteInputs({ destination, onConfirm }) {
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState(destination ?? '');
+function RouteInputs({ stops, onStopsChange, onConfirm }) {
+  const containerRef = useRef(null);
+  const dragRef      = useRef({ active: false, idx: null });
+  const [draggingIdx, setDraggingIdx] = useState(null);
+
+  const updateStop = (id, value) =>
+    onStopsChange(prev => prev.map(s => s.id === id ? { ...s, value } : s));
+
+  const addStop = () =>
+    onStopsChange(prev => {
+      const arr = [...prev];
+      arr.splice(arr.length - 1, 0, { id: `wp-${Date.now()}`, value: '' });
+      return arr;
+    });
+
+  const removeStop = (id) =>
+    onStopsChange(prev => prev.filter(s => s.id !== id));
+
+  const startDrag = useCallback((e, idx) => {
+    e.preventDefault();
+    dragRef.current = { active: true, idx };
+    setDraggingIdx(idx);
+  }, []);
+
+  const moveDrag = useCallback((e) => {
+    if (!dragRef.current.active) return;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    if (clientY == null) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const rows = [...container.querySelectorAll('[data-stop-row]')];
+    let targetIdx = rows.length - 1;
+    for (let i = 0; i < rows.length; i++) {
+      const rect = rows[i].getBoundingClientRect();
+      if (clientY < rect.top + rect.height * 0.5) { targetIdx = i; break; }
+    }
+    if (targetIdx !== dragRef.current.idx) {
+      onStopsChange(prev => {
+        const arr = [...prev];
+        const [item] = arr.splice(dragRef.current.idx, 1);
+        arr.splice(targetIdx, 0, item);
+        dragRef.current.idx = targetIdx;
+        return arr;
+      });
+      setDraggingIdx(targetIdx);
+    }
+  }, [onStopsChange]);
+
+  const endDrag = useCallback(() => {
+    dragRef.current.active = false;
+    setDraggingIdx(null);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mouseup',   endDrag);
+    window.addEventListener('touchmove', moveDrag, { passive: false });
+    window.addEventListener('touchend',  endDrag);
+    return () => {
+      window.removeEventListener('mousemove', moveDrag);
+      window.removeEventListener('mouseup',   endDrag);
+      window.removeEventListener('touchmove', moveDrag);
+      window.removeEventListener('touchend',  endDrag);
+    };
+  }, [moveDrag, endDrag]);
+
+  const canConfirm = stops[0]?.value || stops[stops.length - 1]?.value;
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-[#e2e8f0] overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-[#f1f5f9]">
-          <div className="w-2.5 h-2.5 rounded-full bg-teal shrink-0" />
-          <input
-            type="text"
-            value={from}
-            onChange={e => setFrom(e.target.value)}
-            placeholder="Votre position"
-            className="flex-1 text-[#0f172a] text-sm outline-none placeholder-[#94a3b8] font-medium bg-transparent"
-          />
-          <button className="text-teal shrink-0" aria-label="Utiliser ma position">
-            <i className="fa-solid fa-location-crosshairs text-lg" />
-          </button>
-        </div>
-        <div className="flex items-center gap-3 px-4 py-4">
-          <div className="w-2.5 h-2.5 rounded-sm bg-[#0f172a] shrink-0" />
-          <input
-            type="text"
-            value={to}
-            onChange={e => setTo(e.target.value)}
-            placeholder="Où aller ?"
-            className="flex-1 text-[#0f172a] text-sm outline-none placeholder-[#94a3b8] font-medium bg-transparent"
-          />
-        </div>
+    <div className="flex flex-col gap-4 p-4 overflow-y-auto h-full">
+      <div ref={containerRef} className="bg-white rounded-2xl shadow-sm ring-1 ring-[#e2e8f0] overflow-hidden">
+        {stops.map((stop, idx) => {
+          const isFirst = idx === 0;
+          const isLast  = idx === stops.length - 1;
+          return (
+            <div
+              key={stop.id}
+              data-stop-row=""
+              className={`flex items-center gap-3 px-3 py-3.5 ${!isLast ? 'border-b border-[#f1f5f9]' : ''} ${draggingIdx === idx ? 'opacity-40 bg-[#f8fafc]' : ''} transition-opacity`}
+            >
+              <div
+                className="shrink-0 cursor-grab active:cursor-grabbing touch-none text-[#cbd5e1] hover:text-[#94a3b8] transition-colors px-1 select-none"
+                onMouseDown={e => startDrag(e, idx)}
+                onTouchStart={e => startDrag(e, idx)}
+              >
+                <i className="fa-solid fa-grip-vertical text-xs" />
+              </div>
+
+              <StopDot idx={idx} total={stops.length} />
+
+              <input
+                type="text"
+                value={stop.value}
+                onChange={e => updateStop(stop.id, e.target.value)}
+                placeholder={isFirst ? 'Votre position' : isLast ? 'Où aller ?' : 'Étape intermédiaire'}
+                className="flex-1 text-[#0f172a] text-sm outline-none placeholder-[#94a3b8] font-medium bg-transparent min-w-0"
+              />
+
+              {isFirst && (
+                <button className="text-teal shrink-0" aria-label="Utiliser ma position">
+                  <i className="fa-solid fa-location-crosshairs text-lg" />
+                </button>
+              )}
+              {!isFirst && !isLast && (
+                <button
+                  onClick={() => removeStop(stop.id)}
+                  className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-[#94a3b8] hover:text-red-400 transition-colors"
+                  aria-label="Supprimer cette étape"
+                >
+                  <i className="fa-solid fa-xmark text-xs" />
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <button className="flex items-center gap-2 text-teal text-sm font-semibold">
-        <i className="fa-solid fa-location-dot" />
-        Utiliser votre position
-      </button>
+      <div className="flex items-center justify-between">
+        <button onClick={addStop} className="flex items-center gap-2 text-teal text-sm font-semibold">
+          <i className="fa-solid fa-plus text-xs" />
+          Ajouter une étape
+        </button>
+        <button className="flex items-center gap-2 text-[#64748b] text-sm">
+          <i className="fa-solid fa-location-dot text-teal" />
+          Ma position
+        </button>
+      </div>
 
       <div className="flex gap-2 flex-wrap">
         {savedPlaces.map(place => (
           <button
             key={place.id}
-            onClick={() => setFrom(place.label)}
+            onClick={() => updateStop(stops[0].id, place.label)}
             className="flex items-center gap-2 bg-white text-[#0f172a] rounded-xl px-4 py-2.5 font-semibold text-sm shadow-sm ring-1 ring-[#e2e8f0] hover:bg-[#f1f5f9] transition-colors"
           >
             <i className={`fa-solid ${place.icon} text-teal text-sm`} />
@@ -111,8 +208,8 @@ function RouteInputs({ destination, onConfirm }) {
 
       <button
         onClick={onConfirm}
-        disabled={!from && !to}
-        className="w-full h-13 bg-teal text-white rounded-xl font-bold text-sm hover:bg-teal-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-2 py-4"
+        disabled={!canConfirm}
+        className="w-full bg-teal text-white rounded-xl font-bold text-sm hover:bg-teal-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed py-4"
       >
         Rechercher un itinéraire
       </button>
@@ -138,10 +235,24 @@ function nearestSnap(h, winH) {
     Math.abs(v - h) < Math.abs(vals[best] - h) ? k : best, 'peek');
 }
 
-function ItineraryView() {
+function ItineraryView({ stops, onEditRoute, onSwap }) {
   const [saved,     setSaved]     = useState(false);
   const [panelH,    setPanelH]    = useState(SNAPS.peek);
   const [animating, setAnimating] = useState(false);
+  const [swapAnim, setSwapAnim]   = useState(false);
+  const [addAnim,  setAddAnim]    = useState(false);
+
+  const handleSwap = () => {
+    setSwapAnim(true);
+    setTimeout(() => setSwapAnim(false), 350);
+    onSwap();
+  };
+
+  const handleAdd = () => {
+    setAddAnim(true);
+    setTimeout(() => setAddAnim(false), 200);
+    onEditRoute();
+  };
 
   const drag = useRef({ on: false, startY: 0, startH: 0, moved: false });
   const curH = useRef(SNAPS.peek);
@@ -180,13 +291,13 @@ function ItineraryView() {
     if (!drag.current.on) return;
     drag.current.on = false;
     if (!drag.current.moved) {
-      const cur = nearestSnap(curH.current, winH.current);
+      const cur  = nearestSnap(curH.current, winH.current);
       const next = cur === 'peek' ? 'mid' : cur === 'mid' ? 'full' : 'peek';
       snapTo(next);
       return;
     }
-    const delta = drag.current.startY - clientY;
-    const snaps = ['peek', 'mid', 'full'];
+    const delta  = drag.current.startY - clientY;
+    const snaps  = ['peek', 'mid', 'full'];
     const curIdx = snaps.indexOf(nearestSnap(curH.current, winH.current));
     let targetKey;
     if (Math.abs(delta) > 60) {
@@ -217,23 +328,33 @@ function ItineraryView() {
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="bg-white rounded-2xl shadow-lg px-4 py-3 max-w-lg mx-auto ring-1 ring-[#e2e8f0]">
           <div className="flex items-center gap-3">
-            <div className="flex-1 flex flex-col gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-full bg-teal shrink-0" />
-                <span className="text-[#0f172a] text-sm font-medium">8 rue des potiers</span>
-              </div>
-              <div className="h-px bg-[#f1f5f9]" />
-              <div className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-sm bg-[#0f172a] shrink-0" />
-                <span className="text-[#0f172a] text-sm font-medium">235th Barber Street</span>
-              </div>
+            <div className="flex-1 flex flex-col min-w-0">
+              {stops.map((stop, idx) => (
+                <div key={stop.id}>
+                  <div className="flex items-center gap-2.5 py-1.5">
+                    <StopDot idx={idx} total={stops.length} />
+                    <span className="text-[#0f172a] text-sm font-medium truncate">
+                      {stop.value || (idx === 0 ? 'Départ' : 'Arrivée')}
+                    </span>
+                  </div>
+                  {idx < stops.length - 1 && <div className="h-px bg-[#f1f5f9] ml-5" />}
+                </div>
+              ))}
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
-              <button className="w-7 h-7 bg-[#f1f5f9] rounded-full flex items-center justify-center hover:bg-[#e2e8f0] transition-colors">
-                <i className="fa-solid fa-plus text-[#64748b] text-xs" />
+              <button
+                onClick={handleAdd}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150 ${addAnim ? 'bg-teal scale-90 shadow-md' : 'bg-[#f1f5f9] hover:bg-[#e2e8f0]'}`}
+                aria-label="Ajouter une étape"
+              >
+                <i className={`fa-solid fa-plus text-xs transition-colors duration-150 ${addAnim ? 'text-white' : 'text-[#64748b]'}`} />
               </button>
-              <button className="w-7 h-7 bg-[#f1f5f9] rounded-full flex items-center justify-center hover:bg-[#e2e8f0] transition-colors">
-                <i className="fa-solid fa-arrows-up-down text-[#64748b] text-xs" />
+              <button
+                onClick={handleSwap}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${swapAnim ? 'bg-teal scale-90 shadow-md' : 'bg-[#f1f5f9] hover:bg-[#e2e8f0]'}`}
+                aria-label="Inverser départ et arrivée"
+              >
+                <i className={`fa-solid fa-arrows-up-down text-xs transition-all duration-300 ${swapAnim ? 'text-white rotate-180' : 'text-[#64748b]'}`} />
               </button>
             </div>
           </div>
@@ -270,11 +391,13 @@ function ItineraryView() {
           </div>
 
           <div className="flex items-center justify-between px-4 pb-3 pointer-events-none">
-            <p className="text-[#64748b] text-xs">8 rue des potiers → 235th Barber Street</p>
+            <p className="text-[#64748b] text-xs truncate flex-1">
+              {stops.map(s => s.value || '?').join(' → ')}
+            </p>
             <button
               onMouseDown={e => e.stopPropagation()}
               onClick={() => setSaved(s => !s)}
-              className="w-9 h-9 flex items-center justify-center rounded-full border border-[#e2e8f0] hover:bg-[#f1f5f9] transition-colors pointer-events-auto"
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-[#e2e8f0] hover:bg-[#f1f5f9] transition-colors pointer-events-auto ml-2 shrink-0"
             >
               <i className={`fa-${saved ? 'solid' : 'regular'} fa-heart text-sm ${saved ? 'text-red-500' : 'text-[#94a3b8]'}`} />
             </button>
@@ -297,31 +420,42 @@ function ItineraryView() {
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState('destination');
+  const [step,  setStep]  = useState('destination');
   const [query, setQuery] = useState('');
-  const [selectedDestination, setSelectedDestination] = useState('');
+  const [stops, setStops] = useState([
+    { id: 'start', value: '' },
+    { id: 'end',   value: '' },
+  ]);
 
   const handleSelectResult = useCallback(result => {
-    setSelectedDestination(result.name);
+    setStops(prev => {
+      const arr = [...prev];
+      arr[arr.length - 1] = { ...arr[arr.length - 1], value: result.name };
+      return arr;
+    });
     setStep('route');
     setQuery('');
   }, []);
 
   const handleSelectSaved = useCallback(place => {
-    setSelectedDestination(place.label);
+    setStops(prev => {
+      const arr = [...prev];
+      arr[arr.length - 1] = { ...arr[arr.length - 1], value: place.label };
+      return arr;
+    });
     setStep('route');
   }, []);
 
   const handleBack = () => {
     if (step === 'destination') navigate(-1);
-    else if (step === 'route') setStep('destination');
-    else if (step === 'itinerary') setStep('route');
+    else if (step === 'route')      setStep('destination');
+    else if (step === 'itinerary')  setStep('route');
   };
 
   const TITLES = {
     destination: 'Rechercher',
-    route: 'Rechercher',
-    itinerary: 'Itinéraire',
+    route:       'Rechercher',
+    itinerary:   'Itinéraire',
   };
 
   return (
@@ -369,11 +503,22 @@ export default function SearchPage() {
         )}
         {step === 'route' && (
           <RouteInputs
-            destination={selectedDestination}
+            stops={stops}
+            onStopsChange={setStops}
             onConfirm={() => setStep('itinerary')}
           />
         )}
-        {step === 'itinerary' && <ItineraryView />}
+        {step === 'itinerary' && (
+          <ItineraryView
+            stops={stops}
+            onEditRoute={() => setStep('route')}
+            onSwap={() => setStops(prev => {
+              const arr = [...prev];
+              [arr[0], arr[arr.length - 1]] = [arr[arr.length - 1], arr[0]];
+              return arr;
+            })}
+          />
+        )}
       </div>
     </div>
   );
