@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiaGlqaWFuZ3RhbyIsImEiOiJjampxcjFnb3E2NTB5M3BvM253ZHV5YjhjIn0.WneUon5qFigfJRJ3oaZ3Ow';
+mapboxgl.accessToken = "pk.eyJ1IjoibW9vdmlqb2IiLCJhIjoiY2tuenYyZGI4MDltYzJwbXZwNTV5eWNobCJ9.NvAh02Q732tcCkLM7DJywg";
 
 const MapComponent = ({ searchQuery }) => {
   const mapContainer = useRef(null);

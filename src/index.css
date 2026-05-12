@@ -1,12 +1,59 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: corporate;
+@plugin "daisyui";
+
+/* Custom design tokens */
+@theme {
+  --color-teal: #00b5d8;
+  --color-teal-hover: #009fbe;
+  --color-app-black: #0a0a0a;
+  --color-app-dark: #141414;
+  --color-app-card: #1e1e1e;
+  --color-app-border: #2a2a2a;
+  --color-app-muted: #6b7280;
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom DaisyUI theme */
+[data-theme="hubert"] {
+  color-scheme: light;
+  --color-base-100: #f5f7fa;
+  --color-base-200: #ffffff;
+  --color-base-300: #f1f5f9;
+  --color-base-content: #0f172a;
+  --color-primary: #00b5d8;
+  --color-primary-content: #ffffff;
+  --color-secondary: #e2e8f0;
+  --color-secondary-content: #0f172a;
+  --color-accent: #00b5d8;
+  --color-accent-content: #ffffff;
+  --color-neutral: #f1f5f9;
+  --color-neutral-content: #0f172a;
+  --color-info: #00b5d8;
+  --color-info-content: #ffffff;
+  --color-success: #22c55e;
+  --color-success-content: #ffffff;
+  --color-warning: #f97316;
+  --color-warning-content: #ffffff;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+  --radius-box: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-selector: 0.5rem;
+  --border: 1px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 *::-webkit-scrollbar {
   display: none;
-  -ms-overflow-style: none; /* IE & Edge */
-  scrollbar-width: none; /* Firefox */
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 html {
@@ -14,6 +61,9 @@ html {
 }
 
 body {
-  font-family: "Pixelify Sans", sans-serif;
-  outline: none;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f5f7fa;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

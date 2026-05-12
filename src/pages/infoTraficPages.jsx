@@ -6,7 +6,7 @@ import TabButton from "../components/infoTraficPages/tabBtn";
 import PageHeader from "../components/commons/pageHeader";
 
 export default function InfoTrafic() {
-    const [activeTab, setActiveTab] = useState("trajets"); // 'trajets' ou 'position'
+    const [activeTab, setActiveTab] = useState("trajets");
 
     return (
         <div className="min-h-screen bg-[#050505] text-white px-4 pt-6 pb-10 relative">
