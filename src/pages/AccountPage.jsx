@@ -48,7 +48,7 @@ export default function AccountPage() {
           <div className="w-24 h-24 bg-[#f1f5f9] border-2 border-[#e2e8f0] rounded-full flex items-center justify-center mb-4">
             <i className="fa-solid fa-user text-4xl text-[#94a3b8]" />
           </div>
-          <h2 className="text-xl font-bold text-[#0f172a]">Mister Hubert</h2>
+          <h2 className="text-xl font-bold text-[#0f172a]">Sir Hubert</h2>
           <div className="w-16 h-0.5 bg-[#e2e8f0] mt-4" />
         </div>
 
