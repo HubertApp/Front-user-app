@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MapView from '../components/map/MapView';
 import AutocompleteItem from '../components/search/AutocompleteItem';
 import ItineraryStep from '../components/itinerary/ItineraryStep';
@@ -483,11 +483,14 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
    ────────────────────────────────────────────────────────────────────────── */
 export default function SearchPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState('destination');
+  const location = useLocation();
+  const prefill = location.state;
+
+  const [step, setStep] = useState(() => prefill?.from && prefill?.to ? 'route' : 'destination');
   const [query, setQuery] = useState('');
-  const [stops, setStops] = useState([
-    { id: 'start', value: 'Maison' },
-    { id: 'end',   value: '' },
+  const [stops, setStops] = useState(() => [
+    { id: 'start', value: prefill?.from ?? 'Maison' },
+    { id: 'end',   value: prefill?.to  ?? '' },
   ]);
 
   const handleBack = () => {

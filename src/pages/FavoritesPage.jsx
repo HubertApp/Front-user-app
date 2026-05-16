@@ -38,6 +38,7 @@ export default function FavoritesPage() {
           <i className="fa-solid fa-chevron-down text-soft text-[11px] ml-auto" />
         </button>
         <button
+          onClick={() => navigate('/recherche')}
           className="pressable shrink-0 w-11 h-11 bg-white rounded-2xl flex items-center justify-center"
           style={{ boxShadow: '0 4px 16px -6px rgba(15,26,36,0.16)' }}
           aria-label="Filtres"
@@ -60,7 +61,7 @@ export default function FavoritesPage() {
       </div>
 
       {/* Bottom panel */}
-      <div className="absolute bottom-24 md:bottom-0 left-0 right-0 sidebar-left z-10">
+      <div className="absolute bottom-[72px] md:bottom-0 left-0 right-0 sidebar-left z-10 mb-2 md:mb-0">
         <div
           className="backdrop-blur-md rounded-t-3xl overflow-hidden transition-all duration-300 ease-in-out"
           style={{ background: panelBg }}
@@ -111,7 +112,7 @@ export default function FavoritesPage() {
             <div
               ref={scrollRef}
               onScroll={onScroll}
-              className="flex gap-3 overflow-x-auto px-5 pb-2 pt-1 snap-x snap-mandatory md:justify-start"
+              className="flex justify-center gap-3 overflow-x-auto px-5 pb-2 pt-1 snap-x snap-mandatory md:justify-start"
             >
               {favoriteRoutes.map(r => (
                 <FavoriteCard key={r.id} {...r} />

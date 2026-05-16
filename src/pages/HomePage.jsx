@@ -121,7 +121,7 @@ export default function HomePage() {
                 modes={f.modes}
                 meta={f.meta}
                 when={f.when}
-                onClick={() => navigate('/recherche')}
+                onClick={() => navigate('/recherche', { state: { from: f.from, to: f.to } })}
               />
             ))}
           </div>
