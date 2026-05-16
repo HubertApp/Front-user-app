@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
-import { useTheme } from '../context/ThemeContext';
 
 function SettingRow({ icon, label, sub, trailing, onClick }) {
   return (
@@ -25,7 +24,7 @@ function SettingsSection({ title, children }) {
   return (
     <section className="mb-5">
       <h4 className="h-section mb-2 px-1">{title}</h4>
-      <div className="bg-warm-card rounded-2xl border border-line divide-y divide-line-soft overflow-hidden">
+      <div className="bg-white rounded-2xl border border-line divide-y divide-line-soft overflow-hidden">
         {children}
       </div>
     </section>
@@ -34,10 +33,10 @@ function SettingsSection({ title, children }) {
 
 export default function AccountPage() {
   const [notifs, setNotifs] = useState(true);
-  const { dark, toggle: toggleDark, collapsed } = useTheme();
+  const [dark, setDark] = useState(false);
 
   return (
-    <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
+    <div className="min-h-screen bg-warm-bg text-ink md:pl-64 pb-28 md:pb-12">
       <div className="max-w-md mx-auto px-5 md:px-8">
         <PageHeader
           eyebrow="Votre espace"
@@ -55,10 +54,9 @@ export default function AccountPage() {
         {/* Avatar hero */}
         <div className="flex flex-col items-center pt-3 pb-5">
           <div
-            className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[32px] font-bold mb-3"
+            className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[32px] font-bold text-ink mb-3"
             style={{
               background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)',
-              color: '#0E1A24',
               border: '4px solid #fff',
               boxShadow: '0 8px 24px -10px rgba(15,26,36,0.20)',
             }}
@@ -104,8 +102,8 @@ export default function AccountPage() {
         <SettingsSection title="Préférences">
           <SettingRow icon="fa-bell" label="Notifications" sub="Alertes trafic, rappels de départ"
             trailing={<span className={`togg ${notifs ? '' : 'off'}`} />} onClick={() => setNotifs(v => !v)} />
-          <SettingRow icon="fa-moon" label="Mode sombre" sub="Thème nuit activé globalement"
-            trailing={<span className={`togg ${dark ? '' : 'off'}`} />} onClick={toggleDark} />
+          <SettingRow icon="fa-moon" label="Mode sombre" sub="Suivre les paramètres du système"
+            trailing={<span className={`togg ${dark ? '' : 'off'}`} />} onClick={() => setDark(v => !v)} />
           <SettingRow icon="fa-language" label="Langue & région" sub="Français · Grand Est"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
           <SettingRow icon="fa-shield-halved" label="Gestion des consentements" sub="Cookies, données partagées"

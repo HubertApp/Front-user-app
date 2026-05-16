@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
+/**
+ * MapView — renders a Mapbox GL map. Falls back to a stylized SVG placeholder
+ * when no VITE_MAPBOX_TOKEN is provided or the map fails to load.
+ */
 function MapPlaceholder({ withRoute = true, withPin = true }) {
   return (
     <div className="absolute inset-0 overflow-hidden map-placeholder">

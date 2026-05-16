@@ -5,7 +5,6 @@ import HubertLogo from '../components/ui/HubertLogo';
 import QuickActionCard from '../components/home/QuickActionCard';
 import LiveTripCard from '../components/home/LiveTripCard';
 import FrequentRouteRow from '../components/home/FrequentRouteRow';
-import { useTheme } from '../context/ThemeContext';
 
 const quickActions = [
   { key: 'favoris', title: 'Favoris',     icon: 'fa-heart',            tone: 'coral', to: '/favoris' },
@@ -35,10 +34,9 @@ const frequent = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { collapsed } = useTheme();
 
   return (
-    <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
+    <div className="min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 md:pl-64">
       <div className="max-w-2xl mx-auto px-5 md:px-8 pt-12 md:pt-10">
 
         {/* top bar */}
@@ -46,7 +44,7 @@ export default function HomePage() {
           <button
             onClick={() => navigate('/compte')}
             className="pressable w-10 h-10 rounded-full border border-line bg-white flex items-center justify-center text-sm font-bold"
-            style={{ background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)', color: '#0E1A24' }}
+            style={{ background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)' }}
             aria-label="Compte"
           >
             SH

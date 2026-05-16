@@ -3,7 +3,6 @@ import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
 import TravelCard from '../components/travels/TravelCard';
 import { myTravels } from '../data/mock';
-import { useTheme } from '../context/ThemeContext';
 
 const FILTERS = [
   { key: 'all',    label: 'Tous' },
@@ -14,7 +13,6 @@ const FILTERS = [
 export default function TravelsPage() {
   const [filter, setFilter] = useState('all');
   const [openId, setOpenId] = useState(1);
-  const { collapsed } = useTheme();
 
   const filtered = useMemo(
     () => (filter === 'all' ? myTravels : myTravels.filter(t => t.status === filter)),
@@ -31,7 +29,7 @@ export default function TravelsPage() {
   );
 
   return (
-    <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
+    <div className="min-h-screen bg-warm-bg text-ink md:pl-64 pb-28 md:pb-12">
       <div className="max-w-2xl mx-auto px-5 md:px-8">
         <PageHeader
           eyebrow="Historique & en cours"

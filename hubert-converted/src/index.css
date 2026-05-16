@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Custom design tokens */
+@theme {
+  /* Brand */
+  --color-teal: #0AB5C9;
+  --color-teal-hover: #0790A0;
+  --color-teal-soft: rgba(10, 181, 201, 0.10);
+
+  /* Text */
+  --color-ink: #0E1A24;
+  --color-ink-2: #2E3D4B;
+  --color-muted: #5B6B7A;
+  --color-soft: #94A3B8;
+
+  /* Surfaces */
+  --color-warm-bg: #F6F7F4;
+  --color-warm-card: #FFFFFF;
+  --color-line: #EAECEE;
+  --color-line-soft: #F1F2F4;
+
+  /* Status */
+  --color-warning: #E78A2B;
+  --color-warning-soft: #FBE9D4;
+  --color-danger: #D4564A;
+  --color-danger-soft: #F8DAD5;
+  --color-success: #1F9D6E;
+
+  /* Legacy app tokens kept for backward compat */
+  --color-app-black: #0a0a0a;
+  --color-app-dark: #141414;
+  --color-app-card: #1e1e1e;
+  --color-app-border: #2a2a2a;
+  --color-app-muted: #6b7280;
+
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-display: 'Lilita One', cursive;
+  --font-family-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* DaisyUI theme */
+[data-theme="hubert"] {
+  color-scheme: light;
+  --color-base-100: #F6F7F4;
+  --color-base-200: #ffffff;
+  --color-base-300: #F1F2F4;
+  --color-base-content: #0E1A24;
+  --color-primary: #0AB5C9;
+  --color-primary-content: #ffffff;
+  --color-secondary: #EAECEE;
+  --color-secondary-content: #0E1A24;
+  --color-accent: #0AB5C9;
+  --color-accent-content: #ffffff;
+  --color-neutral: #F1F2F4;
+  --color-neutral-content: #0E1A24;
+  --color-info: #0AB5C9;
+  --color-info-content: #ffffff;
+  --color-success: #1F9D6E;
+  --color-success-content: #ffffff;
+  --color-warning: #E78A2B;
+  --color-warning-content: #ffffff;
+  --color-error: #D4564A;
+  --color-error-content: #ffffff;
+  --radius-box: 1.25rem;
+  --radius-field: 0.875rem;
+  --radius-selector: 0.625rem;
+  --border: 1px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+*::-webkit-scrollbar { display: none; }
+* { -ms-overflow-style: none; scrollbar-width: none; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #F6F7F4;
+  color: #0E1A24;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Pressable affordance for buttons / cards */
+.pressable {
+  transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+  cursor: pointer;
+}
+.pressable:active { transform: scale(0.97); }
+
+/* Numeric / tabular feel for times, durations */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Tiny eyebrow type style */
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+/* Section caption */
+.h-section {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-soft);
+}
+
+/* Toggle switch */
+.togg {
+  width: 38px; height: 22px;
+  border-radius: 999px;
+  background: var(--color-teal);
+  position: relative;
+  transition: background-color 150ms ease;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.togg::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 18px;
+  transition: left 150ms ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+.togg.off { background: #D8DCDE; }
+.togg.off::after { left: 2px; }
+
+/* Map placeholder background (used when Mapbox token is missing) */
+.map-placeholder {
+  background: linear-gradient(180deg, #DDE9DE 0%, #D2E0CE 100%);
+}

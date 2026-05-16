@@ -1,5 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * PageHeader — top-of-page bar with eyebrow, title, and optional right action.
+ * Use on full-page screens with no map background.
+ */
 export default function PageHeader({ title, eyebrow, action, onBack, hideBack = false }) {
   const navigate = useNavigate();
   const handleBack = onBack ?? (() => navigate(-1));

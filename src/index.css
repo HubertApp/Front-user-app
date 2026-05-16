@@ -1,69 +1,240 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* Custom design tokens */
+/* ── Design tokens (light) ──────────────────────────────────────────────── */
 @theme {
-  --color-teal: #00b5d8;
-  --color-teal-hover: #009fbe;
+  /* Brand */
+  --color-teal: #0AB5C9;
+  --color-teal-hover: #0790A0;
+  --color-teal-soft: rgba(10, 181, 201, 0.10);
+
+  /* Text */
+  --color-ink: #0E1A24;
+  --color-ink-2: #2E3D4B;
+  --color-muted: #5B6B7A;
+  --color-soft: #94A3B8;
+
+  /* Surfaces */
+  --color-warm-bg: #F6F7F4;
+  --color-warm-card: #FFFFFF;
+  --color-line: #EAECEE;
+  --color-line-soft: #F1F2F4;
+
+  /* Status */
+  --color-warning: #E78A2B;
+  --color-warning-soft: #FBE9D4;
+  --color-danger: #D4564A;
+  --color-danger-soft: #F8DAD5;
+  --color-success: #1F9D6E;
+
+  /* Legacy tokens */
   --color-app-black: #0a0a0a;
   --color-app-dark: #141414;
   --color-app-card: #1e1e1e;
   --color-app-border: #2a2a2a;
   --color-app-muted: #6b7280;
+
   --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-display: 'Lilita One', cursive;
+  --font-family-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-/* Custom DaisyUI theme */
+/* ── DaisyUI — Light theme ──────────────────────────────────────────────── */
 [data-theme="hubert"] {
   color-scheme: light;
-  --color-base-100: #f5f7fa;
+  --color-base-100: #F6F7F4;
   --color-base-200: #ffffff;
-  --color-base-300: #f1f5f9;
-  --color-base-content: #0f172a;
-  --color-primary: #00b5d8;
+  --color-base-300: #F1F2F4;
+  --color-base-content: #0E1A24;
+  --color-primary: #0AB5C9;
   --color-primary-content: #ffffff;
-  --color-secondary: #e2e8f0;
-  --color-secondary-content: #0f172a;
-  --color-accent: #00b5d8;
+  --color-secondary: #EAECEE;
+  --color-secondary-content: #0E1A24;
+  --color-accent: #0AB5C9;
   --color-accent-content: #ffffff;
-  --color-neutral: #f1f5f9;
-  --color-neutral-content: #0f172a;
-  --color-info: #00b5d8;
+  --color-neutral: #F1F2F4;
+  --color-neutral-content: #0E1A24;
+  --color-info: #0AB5C9;
   --color-info-content: #ffffff;
-  --color-success: #22c55e;
+  --color-success: #1F9D6E;
   --color-success-content: #ffffff;
-  --color-warning: #f97316;
+  --color-warning: #E78A2B;
   --color-warning-content: #ffffff;
-  --color-error: #ef4444;
+  --color-error: #D4564A;
   --color-error-content: #ffffff;
-  --radius-box: 0.75rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 0.5rem;
+  --radius-box: 1.25rem;
+  --radius-field: 0.875rem;
+  --radius-selector: 0.625rem;
   --border: 1px;
 }
 
+/* ── DaisyUI — Dark theme ───────────────────────────────────────────────── */
+[data-theme="hubert-dark"] {
+  color-scheme: dark;
+
+  /* DaisyUI tokens */
+  --color-base-100: #0E1A24;
+  --color-base-200: #1B2D3D;
+  --color-base-300: #243447;
+  --color-base-content: #EEF0EE;
+  --color-primary: #0AB5C9;
+  --color-primary-content: #ffffff;
+  --color-secondary: #243447;
+  --color-secondary-content: #EEF0EE;
+  --color-accent: #0AB5C9;
+  --color-accent-content: #ffffff;
+  --color-neutral: #243447;
+  --color-neutral-content: #EEF0EE;
+  --color-info: #0AB5C9;
+  --color-info-content: #ffffff;
+  --color-success: #1F9D6E;
+  --color-success-content: #ffffff;
+  --color-warning: #E78A2B;
+  --color-warning-content: #ffffff;
+  --color-error: #D4564A;
+  --color-error-content: #ffffff;
+  --radius-box: 1.25rem;
+  --radius-field: 0.875rem;
+  --radius-selector: 0.625rem;
+  --border: 1px;
+
+  /* Design tokens override */
+  --color-teal: #0AB5C9;
+  --color-teal-hover: #0DD0E8;
+  --color-teal-soft: rgba(10, 181, 201, 0.14);
+
+  --color-ink: #EEF0EE;
+  --color-ink-2: #B8C8D8;
+  --color-muted: #7A90A4;
+  --color-soft: #3D5060;
+
+  --color-warm-bg: #0E1A24;
+  --color-warm-card: #1B2D3D;
+  --color-line: #243447;
+  --color-line-soft: #1A2B3A;
+
+  --color-warning-soft: rgba(231, 138, 43, 0.18);
+  --color-danger-soft: rgba(212, 86, 74, 0.18);
+}
+
+/* ── Base styles ────────────────────────────────────────────────────────── */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
 
-*::-webkit-scrollbar {
-  display: none;
-}
-* {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+*::-webkit-scrollbar { display: none; }
+* { -ms-overflow-style: none; scrollbar-width: none; }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #f5f7fa;
-  color: #0f172a;
+  background-color: var(--color-warm-bg);
+  color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* ── Utilities ──────────────────────────────────────────────────────────── */
+.pressable {
+  transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+  cursor: pointer;
+}
+.pressable:active { transform: scale(0.97); }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+.h-section {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-soft);
+}
+
+/* Toggle switch */
+.togg {
+  width: 38px; height: 22px;
+  border-radius: 999px;
+  background: var(--color-teal);
+  position: relative;
+  transition: background-color 150ms ease;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.togg::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 18px;
+  transition: left 150ms ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+.togg.off { background: #D8DCDE; }
+.togg.off::after { left: 2px; }
+
+/* Sidebar-aware positioning (CSS variable updated by ThemeContext) */
+:root { --sidebar-w: 256px; }
+@media (min-width: 768px) {
+  .sidebar-left   { left:         var(--sidebar-w); }
+  .sidebar-left-p { left: calc(var(--sidebar-w) + 16px); }
+}
+
+/* Hubert moustache — black in light, white in dark */
+.hubert-moustache { color: #0E1A24; }
+[data-theme="hubert-dark"] .hubert-moustache { color: #EEF0EE; }
+
+/* Dark mode toggle styling */
+[data-theme="hubert-dark"] .togg.off { background: #2E3D4B; }
+
+/* ── Dark mode overrides ────────────────────────────────────────────────── */
+
+/* White surfaces → dark card */
+[data-theme="hubert-dark"] .bg-white {
+  background-color: var(--color-warm-card);
+}
+[data-theme="hubert-dark"] .border-white {
+  border-color: var(--color-line);
+}
+
+/*
+ * bg-ink is used as a dark-accent background (active buttons, badges).
+ * In dark mode --color-ink becomes light for text; remap bg-ink to teal
+ * so "bg-ink text-white" stays readable (teal bg + white text).
+ */
+[data-theme="hubert-dark"] .bg-ink {
+  background-color: var(--color-teal);
+}
+[data-theme="hubert-dark"] .border-ink {
+  border-color: var(--color-teal);
+}
+/* hover state on ink buttons */
+[data-theme="hubert-dark"] .hover\:enabled\:bg-ink-2:hover,
+[data-theme="hubert-dark"] .hover\:bg-ink-2:hover {
+  background-color: var(--color-teal-hover);
+}
+
+/* Bottom carousel on FavoritesPage */
+[data-theme="hubert-dark"] .backdrop-blur-md {
+  background: rgba(14, 26, 36, 0.92) !important;
+}
+
+/* Map placeholder background */
+.map-placeholder {
+  background: linear-gradient(180deg, #DDE9DE 0%, #D2E0CE 100%);
+}
+[data-theme="hubert-dark"] .map-placeholder {
+  background: linear-gradient(180deg, #1A2B38 0%, #142030 100%);
 }

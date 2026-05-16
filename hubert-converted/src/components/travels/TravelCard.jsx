@@ -4,7 +4,11 @@ export default function TravelCard({ title, date, status, distance, duration, st
   const isActive = status === 'active';
 
   return (
-    <div className="bg-white rounded-2xl border border-line overflow-hidden">
+    <div
+      className={`bg-white rounded-2xl border border-line overflow-hidden ${
+        isOpen ? '' : ''
+      }`}
+    >
       <button
         onClick={onToggle}
         className="pressable w-full flex items-center gap-3.5 p-4 text-left"
@@ -44,7 +48,7 @@ export default function TravelCard({ title, date, status, distance, duration, st
       </button>
 
       {isOpen && (
-        <div className="px-5 pb-4 border-t border-dashed border-line bg-line-soft">
+        <div className="px-5 pb-4 border-t border-dashed border-line" style={{ background: '#FBFBF9' }}>
           <div className="flex gap-1.5 py-3.5">
             <span className="font-mono text-[10.5px] px-2 py-1 bg-white border border-line rounded-lg text-ink-2 font-semibold">
               {steps.length} étapes

@@ -1,9 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)",
-      "Bash(node -e \"const pkg = require\\('./node_modules/mapbox-gl/package.json'\\); console.log\\('mapbox-gl version:', pkg.version\\)\")",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=pk.eyJ1IjoibW9vdmlqb2IiLCJhIjoiY2tuenYyZGI4MDltYzJwbXZwNTV5eWNobCJ9.NvAh02Q732tcCkLM7DJywg\")"
+      "PowerShell(ls \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\" -Force 2>$null | ForEach-Object { $_.Name })",
+      "PowerShell(ls \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\hubert-converted\" -Force 2>$null | ForEach-Object { $_.Name })",
+      "PowerShell(ls \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\src\\\\components\" -Recurse -Directory | ForEach-Object { $_.Name })",
+      "PowerShell(ls \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\hubert-converted\\\\src\\\\components\" -Recurse -Directory | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\src\\\\components\\\\commons\" | ForEach-Object { $_.Name })",
+      "PowerShell(\\(Get-ChildItem -Path \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\.env.example\" | Get-Content\\) -join \"`n\")",
+      "PowerShell(Get-ChildItem -Recurse \"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\src\" | Where-Object { !$_.PSIsContainer } | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"c:\\\\Users\\\\NOE\\\\Desktop\\\\Projets\\\\HubertApp\\\\Front-user-app\\\\src\\\\\", \"src/\"\\) })"
     ]
   }
 }

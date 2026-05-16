@@ -289,14 +289,12 @@ function RouteStep({ stops, setStops, onConfirm }) {
    Step 3 — Itinerary view (map + draggable bottom sheet)
    ────────────────────────────────────────────────────────────────────────── */
 const SNAPS = { peek: 140, mid: 380, full: 640 };
-const MINI = 56;
 
 function ItineraryView({ stops, onBack, onSwap, onEdit }) {
   const [saved, setSaved] = useState(false);
   const [snap, setSnap] = useState('mid');
   const [panelH, setPanelH] = useState(SNAPS.mid);
   const [animating, setAnimating] = useState(false);
-  const [mini, setMini] = useState(false);
   const drag = useRef({ on: false, startY: 0, startH: 0, moved: false });
   const curH = useRef(SNAPS.mid);
 
@@ -304,24 +302,11 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
     const h = SNAPS[key];
     curH.current = h;
     setSnap(key);
-    setMini(false);
     setAnimating(true);
     setPanelH(h);
   };
 
-  const collapse = () => {
-    setMini(true);
-    setAnimating(true);
-    curH.current = MINI;
-    setPanelH(MINI);
-  };
-
-  const expand = () => {
-    snapTo(snap);
-  };
-
   const startDrag = clientY => {
-    if (mini) return;
     drag.current = { on: true, startY: clientY, startH: curH.current, moved: false };
   };
   const moveDrag = clientY => {
@@ -340,6 +325,7 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
       snapTo(snap === 'peek' ? 'mid' : snap === 'mid' ? 'full' : 'peek');
       return;
     }
+    // snap to nearest
     const h = curH.current;
     const best = ['peek', 'mid', 'full'].reduce((acc, k) =>
       Math.abs(SNAPS[k] - h) < Math.abs(SNAPS[acc] - h) ? k : acc, 'peek');
@@ -412,11 +398,11 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
         }}
       >
         <div
-          className={`shrink-0 ${mini ? 'cursor-pointer' : 'cursor-grab'}`}
-          onMouseDown={e => { e.preventDefault(); if (mini) expand(); else startDrag(e.clientY); }}
-          onTouchStart={e => { if (mini) expand(); else startDrag(e.touches[0].clientY); }}
+          className="shrink-0 cursor-grab"
+          onMouseDown={e => { e.preventDefault(); startDrag(e.clientY); }}
+          onTouchStart={e => startDrag(e.touches[0].clientY)}
           onTouchMove={e => { e.preventDefault(); moveDrag(e.touches[0].clientY); }}
-          onTouchEnd={() => endDrag()}
+          onTouchEnd={e => endDrag(e.changedTouches[0].clientY)}
         >
           <div className="flex justify-center pt-2.5 pb-1.5 pointer-events-none">
             <div className="w-11 h-1 bg-line rounded-full" />
@@ -428,29 +414,16 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
             <p className="text-[14.5px] font-bold tracking-tight text-ink truncate">
               {stops[0]?.value || 'Départ'} → {stops[stops.length - 1]?.value || 'Arrivée'}
             </p>
-            {!mini && (
-              <p className="text-[11.5px] text-muted mt-0.5">Départ maintenant · Arrivée prévue 08:50</p>
-            )}
+            <p className="text-[11.5px] text-muted mt-0.5">Départ maintenant · Arrivée prévue 08:50</p>
           </div>
-          <div className="flex items-center gap-1.5 ml-2 shrink-0">
-            {!mini && (
-              <button
-                onClick={() => setSaved(v => !v)}
-                className={`pressable w-9 h-9 rounded-xl flex items-center justify-center ${
-                  saved ? 'bg-danger-soft text-danger' : 'bg-line-soft text-soft'
-                }`}
-              >
-                <i className={`fa-${saved ? 'solid' : 'regular'} fa-heart`} />
-              </button>
-            )}
-            <button
-              onClick={mini ? expand : collapse}
-              className="pressable w-9 h-9 rounded-xl bg-line-soft text-soft flex items-center justify-center"
-              aria-label={mini ? 'Développer' : 'Réduire'}
-            >
-              <i className={`fa-solid fa-chevron-${mini ? 'up' : 'down'} text-[11px]`} />
-            </button>
-          </div>
+          <button
+            onClick={() => setSaved(v => !v)}
+            className={`pressable w-9 h-9 rounded-xl flex items-center justify-center ml-2 shrink-0 ${
+              saved ? 'bg-danger-soft text-danger' : 'bg-line-soft text-soft'
+            }`}
+          >
+            <i className={`fa-${saved ? 'solid' : 'regular'} fa-heart`} />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-3.5">
@@ -521,7 +494,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-warm-bg z-50 flex flex-col">
+    <div className="fixed inset-0 bg-warm-bg z-50 flex flex-col md:pl-64">
       {step !== 'itinerary' && (
         <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-warm-bg shrink-0">
           <button

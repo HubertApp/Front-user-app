@@ -12,7 +12,7 @@ function Moustache({ pct = '200%' }) {
   );
 }
 
-export default function HubertLogo({ sidebarVariant = false, size, iconOnly = false }) {
+export default function HubertLogo({ sidebarVariant = false, size }) {
   const fontSize = size ?? (sidebarVariant ? '1.7rem' : '2rem');
   const nudgeUp = sidebarVariant ? '0.14em' : '0.12em';
 
@@ -25,7 +25,6 @@ export default function HubertLogo({ sidebarVariant = false, size, iconOnly = fa
       <span className="relative inline-block" style={{ lineHeight: 1 }}>
         <span style={{ display: 'inline-block' }}>H</span>
         <span
-          className="hubert-moustache"
           style={{
             position: 'absolute',
             inset: 0,
@@ -39,7 +38,7 @@ export default function HubertLogo({ sidebarVariant = false, size, iconOnly = fa
           <Moustache />
         </span>
       </span>
-      {!iconOnly && 'ubert'}
+      ubert
     </span>
   );
 }
