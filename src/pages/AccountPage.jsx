@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
 import { useTheme } from '../context/ThemeContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 function SettingRow({ icon, label, sub, trailing, onClick }) {
   return (
@@ -35,10 +36,11 @@ function SettingsSection({ title, children }) {
 export default function AccountPage() {
   const [notifs, setNotifs] = useState(true);
   const { dark, toggle: toggleDark, collapsed } = useTheme();
+  usePageMeta({ title: 'Mon compte', description: 'Gérez votre profil, vos préférences et vos paramètres de sécurité.', path: '/compte', noIndex: true });
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
-      <div className="max-w-md mx-auto px-5 md:px-8">
+      <main id="main-content" className="max-w-md mx-auto px-5 md:px-8">
         <PageHeader
           eyebrow="Votre espace"
           title="Compte"
@@ -121,7 +123,7 @@ export default function AccountPage() {
         <p className="text-center text-[10.5px] text-soft font-mono mt-4">
           Hubert v1.0.0 · © 2025
         </p>
-      </div>
+      </main>
 
       <BottomNav />
     </div>

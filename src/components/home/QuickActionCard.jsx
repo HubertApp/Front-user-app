@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const TONES = {
@@ -7,7 +8,7 @@ const TONES = {
   lilac:   'bg-[#E5DEF7] text-[#5B4DA0]',
 };
 
-export default function QuickActionCard({ title, icon, tone = 'default', to = '#', sub }) {
+const QuickActionCard = memo(function QuickActionCard({ title, icon, tone = 'default', to = '#', sub }) {
   const navigate = useNavigate();
 
   return (
@@ -22,4 +23,6 @@ export default function QuickActionCard({ title, icon, tone = 'default', to = '#
       {sub && <span className="text-[10px] text-muted -mt-1">{sub}</span>}
     </button>
   );
-}
+});
+
+export default QuickActionCard;

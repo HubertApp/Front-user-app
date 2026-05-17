@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import TransportIcon from '../ui/TransportIcon';
 
-export default function LiveTripCard({ from, to, departure, arrival, duration, modes, address, onTrack }) {
+const LiveTripCard = memo(function LiveTripCard({ from, to, departure, arrival, duration, modes, address, onTrack }) {
   return (
     <div
       className="relative overflow-hidden rounded-2xl p-4 text-white"
@@ -56,4 +57,6 @@ export default function LiveTripCard({ from, to, departure, arrival, duration, m
       </div>
     </div>
   );
-}
+});
+
+export default LiveTripCard;

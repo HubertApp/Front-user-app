@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-function MapPlaceholder({ withRoute = true, withPin = true }) {
+const DEFAULT_CENTER = [6.1727, 49.1193];
+const DEFAULT_STYLE = 'mapbox://styles/mapbox/streets-v12';
+
+const MapPlaceholder = memo(function MapPlaceholder({ withRoute = true, withPin = true }) {
   return (
     <div className="absolute inset-0 overflow-hidden map-placeholder">
       <svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" className="w-full h-full block">
@@ -89,12 +92,12 @@ function MapPlaceholder({ withRoute = true, withPin = true }) {
       </div>
     </div>
   );
-}
+});
 
 export default function MapView({
-  center = [6.1727, 49.1193],
+  center = DEFAULT_CENTER,
   zoom = 13,
-  style = 'mapbox://styles/mapbox/streets-v12',
+  style = DEFAULT_STYLE,
   className = 'absolute inset-0',
   withRoute = true,
   withPin = true,
@@ -136,7 +139,8 @@ export default function MapView({
       cancelled = true;
       map?.remove();
     };
-  }, [retryKey, center, zoom, style]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retryKey, center[0], center[1], zoom, style]);
 
   return (
     <div className={className} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>

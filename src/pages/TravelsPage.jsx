@@ -4,6 +4,7 @@ import BottomNav from '../components/layout/BottomNav';
 import TravelCard from '../components/travels/TravelCard';
 import { myTravels } from '../data/mock';
 import { useTheme } from '../context/ThemeContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 const FILTERS = [
   { key: 'all',    label: 'Tous' },
@@ -29,10 +30,11 @@ export default function TravelsPage() {
     }),
     [],
   );
+  usePageMeta({ title: 'Mes voyages', description: 'Retrouvez vos voyages en cours et votre historique de trajets.', path: '/voyages' });
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
-      <div className="max-w-2xl mx-auto px-5 md:px-8">
+      <main id="main-content" className="max-w-2xl mx-auto px-5 md:px-8">
         <PageHeader
           eyebrow="Historique & en cours"
           title="Mes voyages"
@@ -92,7 +94,7 @@ export default function TravelsPage() {
             <p className="text-sm font-medium">Aucun voyage dans cette catégorie</p>
           </div>
         )}
-      </div>
+      </main>
 
       <BottomNav />
     </div>

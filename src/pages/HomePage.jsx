@@ -6,6 +6,7 @@ import QuickActionCard from '../components/home/QuickActionCard';
 import LiveTripCard from '../components/home/LiveTripCard';
 import FrequentRouteRow from '../components/home/FrequentRouteRow';
 import { useTheme } from '../context/ThemeContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 const quickActions = [
   { key: 'favoris', title: 'Favoris',     icon: 'fa-heart',            tone: 'coral', to: '/favoris' },
@@ -36,10 +37,11 @@ const frequent = [
 export default function HomePage() {
   const navigate = useNavigate();
   const { collapsed } = useTheme();
+  usePageMeta({ title: 'Accueil', description: 'Planifiez vos trajets du quotidien, suivez votre trajet en cours et retrouvez vos routes favorites.', path: '/' });
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
-      <div className="max-w-2xl mx-auto px-5 md:px-8 pt-12 md:pt-10">
+      <main id="main-content" className="max-w-2xl mx-auto px-5 md:px-8 pt-12 md:pt-10">
 
         {/* top bar */}
         <div className="flex items-center justify-between mb-2">
@@ -127,7 +129,7 @@ export default function HomePage() {
           </div>
         </section>
 
-      </div>
+      </main>
 
       <BottomNav />
     </div>

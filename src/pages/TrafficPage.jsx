@@ -5,14 +5,16 @@ import AlertCard from '../components/traffic/AlertCard';
 import MapView from '../components/map/MapView';
 import { trafficAlerts } from '../data/mock';
 import { useTheme } from '../context/ThemeContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function TrafficPage() {
   const [tab, setTab] = useState('trajets');
   const { collapsed } = useTheme();
+  usePageMeta({ title: 'Infos trafic', description: 'Consultez les perturbations en temps réel sur vos trajets et autour de votre position.', path: '/trafic' });
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
-      <div className="max-w-2xl mx-auto px-5 md:px-8">
+      <main id="main-content" className="max-w-2xl mx-auto px-5 md:px-8">
         <PageHeader
           eyebrow="Aujourd'hui · 08:14"
           title="Infos trafic"
@@ -101,7 +103,7 @@ export default function TrafficPage() {
             </div>
           </>
         )}
-      </div>
+      </main>
 
       <BottomNav />
     </div>

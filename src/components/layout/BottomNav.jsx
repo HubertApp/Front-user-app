@@ -18,6 +18,7 @@ export default function BottomNav() {
     <>
       {/* Mobile bottom bar */}
       <nav
+        aria-label="Navigation principale"
         className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-line"
         style={{
           background: navBg,

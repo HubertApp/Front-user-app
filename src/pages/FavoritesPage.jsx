@@ -5,6 +5,7 @@ import BottomNav from '../components/layout/BottomNav';
 import FavoriteCard from '../components/favorites/FavoriteCard';
 import { useTheme } from '../context/ThemeContext';
 import { favoriteRoutes } from '../data/mock';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 const CARD_STEP = 252;
 
@@ -15,6 +16,7 @@ export default function FavoritesPage() {
   const [panelOpen, setPanelOpen] = useState(true);
   const { dark, collapsed } = useTheme();
   const panelBg = dark ? 'rgba(14, 26, 36, 0.92)' : 'rgba(246,247,244,0.86)';
+  usePageMeta({ title: 'Favoris', description: 'Accédez rapidement à vos trajets favoris et itinéraires enregistrés.', path: '/favoris' });
 
   const onScroll = useCallback(() => {
     const el = scrollRef.current;

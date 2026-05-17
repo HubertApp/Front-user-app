@@ -5,6 +5,7 @@ import AutocompleteItem from '../components/search/AutocompleteItem';
 import ItineraryStep from '../components/itinerary/ItineraryStep';
 import EndpointDot from '../components/ui/EndpointDot';
 import { autocompleteResults, savedPlaces, itinerarySteps } from '../data/mock';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Step 1 — Destination search (autocomplete + saved places + recents)
@@ -485,6 +486,7 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const prefill = location.state;
+  usePageMeta({ title: 'Recherche', description: 'Recherchez un itinéraire et planifiez votre trajet.', path: '/recherche', noIndex: true });
 
   const [step, setStep] = useState(() => prefill?.from && prefill?.to ? 'route' : 'destination');
   const [query, setQuery] = useState('');
