@@ -17,6 +17,7 @@ build
 
 # Environment variables
 .env
+.claude
 
 
 # Editor directories and files

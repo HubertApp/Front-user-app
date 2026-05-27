@@ -1,62 +1,109 @@
 import { useState } from 'react';
 import PageHeader from '../components/layout/PageHeader';
-import TabButton from '../components/traffic/TabButton';
-import AlertCard from '../components/traffic/AlertCard';
 import BottomNav from '../components/layout/BottomNav';
-import car from '../img/car.png';
-import target from '../img/target.png';
+import AlertCard from '../components/traffic/AlertCard';
+import MapView from '../components/map/MapView';
 import { trafficAlerts } from '../data/mock';
+import { useTheme } from '../context/ThemeContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function TrafficPage() {
-  const [activeTab, setActiveTab] = useState('trajets');
+  const [tab, setTab] = useState('trajets');
+  const { collapsed } = useTheme();
+  usePageMeta({ title: 'Infos trafic', description: 'Consultez les perturbations en temps réel sur vos trajets et autour de votre position.', path: '/trafic' });
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] text-[#0f172a] md:pl-60">
-      <div className="max-w-2xl mx-auto px-4 pt-6 pb-24 md:pb-10">
-        <PageHeader title="Infos Trafic" />
+    <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
+      <main id="main-content" className="max-w-2xl mx-auto px-5 md:px-8">
+        <PageHeader
+          eyebrow="Aujourd'hui · 08:14"
+          title="Infos trafic"
+          action={
+            <button
+              className="pressable w-10 h-10 rounded-full bg-white border border-line flex items-center justify-center"
+              aria-label="Recharger"
+            >
+              <i className="fa-solid fa-rotate text-[13px]" />
+            </button>
+          }
+        />
 
-        <div className="mt-4 bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-          {/* Tabs */}
-          <div className="flex justify-center gap-6 p-6 border-b border-[#e2e8f0]">
-            <TabButton
-              icon={car}
-              label="Mes trajets"
-              active={activeTab === 'trajets'}
-              onClick={() => setActiveTab('trajets')}
-            />
-            <TabButton
-              icon={target}
-              label="Ma position"
-              active={activeTab === 'position'}
-              onClick={() => setActiveTab('position')}
-            />
-          </div>
-
-          {/* Content */}
-          <div className="p-4">
-            {activeTab === 'trajets' ? (
-              <div className="flex flex-col gap-3">
-                {trafficAlerts.map(alert => (
-                  <AlertCard key={alert.id} {...alert} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-[#64748b] gap-3">
-                <div className="w-16 h-16 bg-[#f1f5f9] rounded-full flex items-center justify-center">
-                  <i className="fa-solid fa-location-dot text-2xl text-teal" />
-                </div>
-                <p className="text-sm font-medium text-[#0f172a]">Géolocalisation en cours…</p>
-                <p className="text-xs text-[#94a3b8] text-center max-w-xs">
-                  Autorisez l'accès à votre position pour voir les perturbations autour de vous.
-                </p>
-                <button className="mt-2 px-5 py-2.5 bg-teal text-white rounded-xl text-sm font-semibold hover:bg-teal-hover transition-colors">
-                  Activer la géolocalisation
-                </button>
-              </div>
-            )}
-          </div>
+        {/* Segmented tabs */}
+        <div className="flex bg-white border border-line rounded-2xl p-1 gap-1 mb-4">
+          <button
+            onClick={() => setTab('trajets')}
+            className={`flex-1 h-10 rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-all ${
+              tab === 'trajets'
+                ? 'bg-ink text-white shadow-md'
+                : 'text-muted hover:text-ink'
+            }`}
+          >
+            <i className="fa-solid fa-route text-[11px]" />
+            Mes trajets
+          </button>
+          <button
+            onClick={() => setTab('position')}
+            className={`flex-1 h-10 rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-all ${
+              tab === 'position'
+                ? 'bg-ink text-white shadow-md'
+                : 'text-muted hover:text-ink'
+            }`}
+          >
+            <i className="fa-solid fa-location-dot text-[11px]" />
+            Ma position
+          </button>
         </div>
-      </div>
+
+        {tab === 'trajets' ? (
+          <>
+            {/* Summary banner */}
+            <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl mb-3">
+              <span className="w-9 h-9 rounded-xl bg-warning-soft text-warning inline-flex items-center justify-center text-[13px]">
+                <i className="fa-solid fa-triangle-exclamation" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-semibold text-ink">
+                  3 perturbations sur vos trajets
+                </p>
+                <p className="text-[11px] text-muted mt-0.5">
+                  Délai cumulé estimé : <b className="text-ink">+32 min</b>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {trafficAlerts.map(a => (
+                <AlertCard key={a.id} {...a} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="relative h-56 rounded-2xl overflow-hidden border border-line mb-3">
+              <MapView withRoute={false} withPin />
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl mb-3">
+              <span className="w-10 h-10 rounded-xl bg-teal-soft text-teal-hover inline-flex items-center justify-center text-base">
+                <i className="fa-solid fa-location-crosshairs" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13.5px] font-bold text-ink">Centre-ville de Metz</p>
+                <p className="text-[11.5px] text-muted mt-0.5">Rayon d'analyse : 1,2 km</p>
+              </div>
+              <button className="pressable w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center text-[12px]">
+                <i className="fa-solid fa-sliders" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {trafficAlerts.slice(0, 2).map(a => (
+                <AlertCard key={a.id} {...a} affects={`À 280 m · ${a.affects}`} />
+              ))}
+            </div>
+          </>
+        )}
+      </main>
 
       <BottomNav />
     </div>

@@ -1,32 +1,26 @@
-import TransportIcon from '../ui/TransportIcon';
+import TransportIcon, { MODE_META } from '../ui/TransportIcon';
 
-const MODE_LABEL = {
-  walk: 'Marche', bus: 'Bus', tram: 'Tram',
-  train: 'Train', plane: 'Avion', car: 'Voiture', bike: 'Vélo',
-};
-
-export default function ItineraryStep({ mode, address, city, duration, isLast }) {
+export default function ItineraryStep({ mode, address, city, duration, when, isLast }) {
+  const meta = MODE_META[mode];
   return (
     <div className="flex gap-3">
-      <div className="flex flex-col items-center pt-1">
+      <div className="flex flex-col items-center pt-0.5">
         <TransportIcon mode={mode} size="sm" />
-        {!isLast && <div className="w-0.5 flex-1 bg-[#e2e8f0] my-1.5 min-h-5" />}
+        {!isLast && <div className="w-px flex-1 bg-line my-1.5 min-h-4 rounded-full" />}
       </div>
-      <div className="flex-1 pb-3">
-        <div className="bg-white border border-[#e2e8f0] rounded-xl p-3 shadow-sm">
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-teal text-xs font-bold uppercase tracking-wider">
-              {MODE_LABEL[mode] ?? mode}
-            </span>
-            <button className="text-teal text-xs font-semibold hover:underline">
-              Voir les détails
-            </button>
-          </div>
-          <p className="text-[#0f172a] text-sm font-medium">{address}</p>
-          <p className="text-[#64748b] text-xs mt-0.5">{city}</p>
+      <div className="flex-1 pb-4 min-w-0">
+        <div className="flex items-center justify-between mb-1 gap-2">
+          <span className="text-[10px] tracking-widest font-bold uppercase text-teal-hover">
+            {meta?.label || mode}
+          </span>
+          {when && <span className="text-[11px] text-muted font-mono">{when}</span>}
         </div>
+        <p className="text-[13.5px] font-semibold text-ink">{address}</p>
+        {city && <p className="text-[11.5px] text-muted mt-0.5">{city}</p>}
         {duration && (
-          <p className="text-center text-[#94a3b8] text-xs mt-2 font-medium">{duration}</p>
+          <span className="inline-block mt-1.5 text-[11px] text-ink-2 bg-line-soft px-2 py-0.5 rounded-md font-mono font-semibold">
+            {duration}
+          </span>
         )}
       </div>
     </div>

@@ -1,22 +1,30 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import FavoritesPage from './pages/FavoritesPage';
-import TrafficPage from './pages/TrafficPage';
-import TravelsPage from './pages/TravelsPage';
-import AccountPage from './pages/AccountPage';
-import SearchPage from './pages/SearchPage';
+import { ThemeProvider } from './context/ThemeContext';
+import { ROUTES } from './constants/routes';
+
+const HomePage      = lazy(() => import('./pages/HomePage'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
+const TrafficPage   = lazy(() => import('./pages/TrafficPage'));
+const TravelsPage   = lazy(() => import('./pages/TravelsPage'));
+const AccountPage   = lazy(() => import('./pages/AccountPage'));
+const SearchPage    = lazy(() => import('./pages/SearchPage'));
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/favoris" element={<FavoritesPage />} />
-        <Route path="/trafic" element={<TrafficPage />} />
-        <Route path="/voyages" element={<TravelsPage />} />
-        <Route path="/compte" element={<AccountPage />} />
-        <Route path="/recherche" element={<SearchPage />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path={ROUTES.home}      element={<HomePage />} />
+            <Route path={ROUTES.favorites} element={<FavoritesPage />} />
+            <Route path={ROUTES.traffic}   element={<TrafficPage />} />
+            <Route path={ROUTES.travels}   element={<TravelsPage />} />
+            <Route path={ROUTES.account}   element={<AccountPage />} />
+            <Route path={ROUTES.search}    element={<SearchPage />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
