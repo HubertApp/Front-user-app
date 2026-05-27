@@ -1,17 +1,28 @@
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function QuickActionCard({ title, image, to = '#', wide = false }) {
+const TONES = {
+  default: 'bg-teal-soft text-teal-hover',
+  coral:   'bg-[#FCE2DC] text-[#BB4A3C]',
+  amber:   'bg-[#F8E5C2] text-[#976618]',
+  lilac:   'bg-[#E5DEF7] text-[#5B4DA0]',
+};
+
+const QuickActionCard = memo(function QuickActionCard({ title, icon, tone = 'default', to = '#', sub }) {
   const navigate = useNavigate();
 
   return (
     <button
       onClick={() => to !== '#' && navigate(to)}
-      className={`flex flex-col items-center justify-center bg-white text-gray-900 rounded-2xl p-4 gap-2 hover:bg-gray-50 active:scale-95 transition-all duration-150 shadow-sm ${
-        wide ? 'h-28' : 'h-28'
-      }`}
+      className="pressable flex flex-col items-center justify-center gap-2 bg-white rounded-2xl border border-line p-3.5 text-center hover:border-ink/30 transition-colors"
     >
-      <img src={image} alt={title} className="w-11 h-11 object-contain" loading="lazy" />
-      <span className="text-xs font-semibold text-center leading-tight text-gray-800">{title}</span>
+      <span className={`w-10 h-10 rounded-xl inline-flex items-center justify-center text-base ${TONES[tone] || TONES.default}`}>
+        <i className={`fa-solid ${icon}`} />
+      </span>
+      <span className="text-[11.5px] font-semibold text-ink leading-tight">{title}</span>
+      {sub && <span className="text-[10px] text-muted -mt-1">{sub}</span>}
     </button>
   );
-}
+});
+
+export default QuickActionCard;

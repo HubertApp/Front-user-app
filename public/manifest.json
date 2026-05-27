@@ -1,0 +1,40 @@
+{
+  "name": "Hubert — Votre compagnon de voyage",
+  "short_name": "Hubert",
+  "description": "Organisez vos trajets, suivez l'info trafic et retrouvez vos itinéraires favoris.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F7F4",
+  "theme_color": "#0AB5C9",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["travel", "navigation", "lifestyle"],
+  "icons": [
+    {
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Rechercher un trajet",
+      "short_name": "Recherche",
+      "url": "/recherche",
+      "description": "Rechercher un itinéraire"
+    },
+    {
+      "name": "Info trafic",
+      "short_name": "Trafic",
+      "url": "/trafic",
+      "description": "Consulter les perturbations en temps réel"
+    }
+  ]
+}

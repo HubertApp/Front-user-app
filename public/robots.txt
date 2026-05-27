@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /compte
+Disallow: /recherche
+
+Sitemap: https://hubertapp.fr/sitemap.xml
