@@ -1,6 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { gql } from "@apollo/client";
 import { useQuery } from '@apollo/client/react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
+import { setToken } from './tokenStore';
+
+const API_BASE_URL = 'http://192.168.22.141:3007';
+const WEB_AUTH_URL = 'http://localhost:3007';
+const DEEP_LINK_PREFIX = 'hubertapp://auth-callback';
 
 function AssetUser() {
   const TEST_QUERY = gql`
@@ -17,20 +25,7 @@ function AssetUser() {
     }
   `;
 
-  const { loading, error, data } = useQuery(TEST_QUERY, {
-    fetchPolicy: 'network-only',
-    errorPolicy: 'all',
-  });
-
-  const result = useQuery(TEST_QUERY, {
-    fetchPolicy: "network-only",
-    errorPolicy: "all",
-  });
-
-  console.log("RESULT =", result);
-  console.log("ERROR =", result.errors);
-
-  console.log("Données GraphQL reçues :", data);
+  const { loading, error, data } = useQuery(TEST_QUERY);
 
   if (loading) return <div style={styles.loader}>Chargement du profil...</div>;
   if (error) return <div style={styles.errorText}>Impossible de charger le profil : {error.message}</div>;
@@ -63,18 +58,40 @@ export default function AuthPages({ onSuccess }) {
   const timerRef = useRef(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const isNative = Capacitor.isNativePlatform();
 
-  const handleLogin = () => {
+  useEffect(() => {
+    if (!isNative) return;
+
+    const listenerPromise = App.addListener('appUrlOpen', async ({ url }) => {
+      if (!url.startsWith(DEEP_LINK_PREFIX)) return;
+
+      const token = new URL(url).searchParams.get('token');
+      await Browser.close();
+
+      if (token) {
+        await setToken(token);
+        setIsAuthenticated(true);
+        if (onSuccess) onSuccess();
+      }
+      setIsConnecting(false);
+    });
+
+    return () => {
+      listenerPromise.then((listener) => listener.remove());
+    };
+  }, [isNative, onSuccess]);
+
+  const handleLoginWeb = () => {
     setIsConnecting(true);
-    
-    // Centrer la popup au milieu de l'écran de l'utilisateur
+
     const width = 500;
     const height = 600;
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
     const popup = window.open(
-      'http://localhost:3007/auth/google',
+      `${WEB_AUTH_URL}/auth/google`,
       'Google Login',
       `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
     );
@@ -82,7 +99,7 @@ export default function AuthPages({ onSuccess }) {
     timerRef.current = setInterval(() => {
       if (popup?.closed) {
         clearInterval(timerRef.current);
-        
+
         setTimeout(() => {
           setIsConnecting(false);
           setIsAuthenticated(true);
@@ -92,10 +109,24 @@ export default function AuthPages({ onSuccess }) {
     }, 500);
   };
 
+  const handleLoginNative = async () => {
+    setIsConnecting(true);
+
+    await Browser.open({ url: `${API_BASE_URL}/auth/google?platform=android` });
+  };
+
+  const handleLogin = () => {
+    if (isNative) {
+      handleLoginNative();
+    } else {
+      handleLoginWeb();
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        
+
         <div style={styles.header}>
           <div style={styles.logoContainer}>
             <svg style={styles.mainLogo} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -106,17 +137,16 @@ export default function AuthPages({ onSuccess }) {
             {isAuthenticated ? 'Bienvenue !' : 'Connexion'}
           </h1>
           <p style={styles.subtitle}>
-            {isAuthenticated 
-              ? 'Vous êtes connecté avec succès à votre espace.' 
+            {isAuthenticated
+              ? 'Vous êtes connecté avec succès à votre espace.'
               : 'Accédez à votre compte en toute sécurité.'}
           </p>
         </div>
 
-        {/* Corps changeant selon l'état de connexion */}
         <div style={styles.body}>
           {!isAuthenticated ? (
-            <button 
-              onClick={handleLogin} 
+            <button
+              onClick={handleLogin}
               disabled={isConnecting}
               style={{
                 ...styles.googleButton,
@@ -139,7 +169,7 @@ export default function AuthPages({ onSuccess }) {
         </div>
 
         <div style={styles.footer}>
-          <p style={styles.footerText}>En continuant, vous acceptez nos conditions d\'utilisation.</p>
+          <p style={styles.footerText}>En continuant, vous acceptez nos conditions d'utilisation.</p>
         </div>
 
       </div>

@@ -8,7 +8,7 @@ import './index.css'
 
 
 const client = new ApolloClient({
-  link: new HttpLink({ uri: "http://192.168.22.141:4000", credentials : "include" }),
+  link: new HttpLink({ uri: "http://localhost:4000", credentials : "include" }),
   
   cache: new InMemoryCache(),
 });
