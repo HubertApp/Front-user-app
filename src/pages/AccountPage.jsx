@@ -120,6 +120,7 @@ export default function AccountPage() {
           <i className="fa-solid fa-arrow-right-from-bracket mr-2" />
           Se déconnecter
         </button>
+        
         <p className="text-center text-[10.5px] text-soft font-mono mt-4">
           Hubert v1.0.0 · © 2025
         </p>
