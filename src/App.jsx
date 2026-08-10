@@ -22,7 +22,7 @@ export default function App() {
             <Route path="/trafic"    element={<TrafficPage />} />
             <Route path="/voyages"   element={<TravelsPage />} />
             <Route path="/login"    element={<AuthPages />} />
-            <Route path="/compte"    element={<AuthPages />} />
+            <Route path="/compte"    element={<AccountPage />} />
             <Route path="/recherche" element={<SearchPage />} />
           </Routes>
         </Suspense>

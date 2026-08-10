@@ -1,61 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { gql } from "@apollo/client";
-import { useQuery } from '@apollo/client/react';
+import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 import { setToken } from './tokenStore';
 
-const API_BASE_URL = 'http://192.168.22.141:3007';
-const WEB_AUTH_URL = 'http://localhost:3007';
+const API_BASE_URL = 'http://192.168.1.189:3000';
+const WEB_AUTH_URL = 'http://localhost:3000';
 const DEEP_LINK_PREFIX = 'hubertapp://auth-callback';
-
-function AssetUser() {
-  const TEST_QUERY = gql`
-    query GetMe {
-      getMe {
-        googleId
-        email
-        age
-        pseudo
-        role
-        created_at
-        updated_at
-      }
-    }
-  `;
-
-  const { loading, error, data } = useQuery(TEST_QUERY);
-
-  if (loading) return <div style={styles.loader}>Chargement du profil...</div>;
-  if (error) return <div style={styles.errorText}>Impossible de charger le profil : {error.message}</div>;
-
-  const user = data?.getMe;
-
-  if (!user) {
-    return (
-      <div style={styles.errorText}>
-        Aucune donnée utilisateur reçue (Problème de validation du token).
-      </div>
-    );
-  }
-
-  return (
-    <div style={styles.profileCard}>
-      <div style={styles.avatar}>
-        {user.pseudo ? user.pseudo.charAt(0).toUpperCase() : 'U'}
-      </div>
-      <div style={styles.profileDetails}>
-        <h3 style={styles.profileName}>{user.pseudo || "Utilisateur"}</h3>
-        <p style={styles.profileEmail}>{user.email}</p>
-        <span style={styles.badge}>{user.role || "Membre"}</span>
-      </div>
-    </div>
-  );
-}
 
 export default function AuthPages({ onSuccess }) {
   const timerRef = useRef(null);
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const isNative = Capacitor.isNativePlatform();
@@ -73,6 +29,7 @@ export default function AuthPages({ onSuccess }) {
         await setToken(token);
         setIsAuthenticated(true);
         if (onSuccess) onSuccess();
+        navigate('/compte');
       }
       setIsConnecting(false);
     });
@@ -80,7 +37,7 @@ export default function AuthPages({ onSuccess }) {
     return () => {
       listenerPromise.then((listener) => listener.remove());
     };
-  }, [isNative, onSuccess]);
+  }, [isNative, onSuccess, navigate]);
 
   const handleLoginWeb = () => {
     setIsConnecting(true);
@@ -104,6 +61,7 @@ export default function AuthPages({ onSuccess }) {
           setIsConnecting(false);
           setIsAuthenticated(true);
           if (onSuccess) onSuccess();
+          navigate('/compte');
         }, 250);
       }
     }, 500);
@@ -164,7 +122,7 @@ export default function AuthPages({ onSuccess }) {
               </span>
             </button>
           ) : (
-            <AssetUser />
+            <div style={styles.loader}>Redirection vers votre compte...</div>
           )}
         </div>
 

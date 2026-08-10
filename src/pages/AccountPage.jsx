@@ -1,8 +1,16 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { useCurrentUser } from '../services/userService';
+import { logout } from '../services/authService';
+
+function initialsOf(pseudo, email) {
+  const source = pseudo || email || '';
+  return source.charAt(0).toUpperCase() || '?';
+}
 
 function SettingRow({ icon, label, sub, trailing, onClick }) {
   return (
@@ -34,9 +42,21 @@ function SettingsSection({ title, children }) {
 }
 
 export default function AccountPage() {
+  const navigate = useNavigate();
   const [notifs, setNotifs] = useState(true);
+  const [photoFailed, setPhotoFailed] = useState(false);
   const { dark, toggle: toggleDark, collapsed } = useTheme();
+  const { loading, error, user } = useCurrentUser();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
   usePageMeta({ title: 'Mon compte', description: 'Gérez votre profil, vos préférences et vos paramètres de sécurité.', path: '/compte', noIndex: true });
+
+  const displayName = loading ? '...' : (user?.pseudo || 'Utilisateur');
+  const displayEmail = loading ? '' : (user?.email || (error ? 'Profil indisponible' : ''));
+  const showPhoto = Boolean(user?.photo) && !photoFailed;
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
@@ -56,19 +76,30 @@ export default function AccountPage() {
 
         {/* Avatar hero */}
         <div className="flex flex-col items-center pt-3 pb-5">
-          <div
-            className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[32px] font-bold mb-3"
-            style={{
-              background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)',
-              color: '#0E1A24',
-              border: '4px solid #fff',
-              boxShadow: '0 8px 24px -10px rgba(15,26,36,0.20)',
-            }}
-          >
-            SH
-          </div>
-          <p className="text-xl font-bold tracking-tight">Sir Hubert</p>
-          <p className="text-[12.5px] text-muted mt-0.5">sir.hubert@hubertapp.fr</p>
+          {showPhoto ? (
+            <img
+              src={user.photo}
+              alt=""
+              referrerPolicy="no-referrer"
+              onError={() => setPhotoFailed(true)}
+              className="w-[88px] h-[88px] rounded-full object-cover mb-3"
+              style={{ border: '4px solid #fff', boxShadow: '0 8px 24px -10px rgba(15,26,36,0.20)' }}
+            />
+          ) : (
+            <div
+              className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[32px] font-bold mb-3"
+              style={{
+                background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)',
+                color: '#0E1A24',
+                border: '4px solid #fff',
+                boxShadow: '0 8px 24px -10px rgba(15,26,36,0.20)',
+              }}
+            >
+              {initialsOf(user?.pseudo, user?.email)}
+            </div>
+          )}
+          <p className="text-xl font-bold tracking-tight">{displayName}</p>
+          <p className="text-[12.5px] text-muted mt-0.5">{displayEmail}</p>
           <button className="pressable mt-3 h-8 px-3.5 rounded-[10px] bg-white border border-line text-[12px] font-semibold text-ink inline-flex items-center gap-1.5">
             <i className="fa-regular fa-pen-to-square text-[11px]" />
             Modifier le profil
@@ -97,7 +128,7 @@ export default function AccountPage() {
         <SettingsSection title="Coordonnées personnelles">
           <SettingRow icon="fa-user" label="Informations personnelles" sub="Nom, prénom, date de naissance"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
-          <SettingRow icon="fa-envelope" label="Adresse e-mail" sub="sir.hubert@hubertapp.fr · vérifiée"
+          <SettingRow icon="fa-envelope" label="Adresse e-mail" sub={displayEmail ? `${displayEmail} · vérifiée` : 'Indisponible'}
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
           <SettingRow icon="fa-key" label="Mot de passe & sécurité" sub="Dernière modification il y a 3 mois"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
@@ -116,7 +147,7 @@ export default function AccountPage() {
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
         </SettingsSection>
 
-        <button className="w-full h-12 border border-[#F1C8C3] text-danger rounded-2xl font-bold text-[13.5px] hover:bg-danger hover:text-white transition-colors">
+        <button onClick={handleLogout} className="w-full h-12 border border-[#F1C8C3] text-danger rounded-2xl font-bold text-[13.5px] hover:bg-danger hover:text-white transition-colors">
           <i className="fa-solid fa-arrow-right-from-bracket mr-2" />
           Se déconnecter
         </button>
