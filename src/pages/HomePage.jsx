@@ -5,6 +5,9 @@ import HubertLogo from '../components/ui/HubertLogo';
 import QuickActionCard from '../components/home/QuickActionCard';
 import LiveTripCard from '../components/home/LiveTripCard';
 import FrequentRouteRow from '../components/home/FrequentRouteRow';
+import UserAvatar from '../components/user/UserAvatar';
+import NotificationCenter from '../components/notifications/NotificationCenter';
+import { useCurrentUser } from '../services/userService';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 
@@ -26,17 +29,18 @@ const frequent = [
   },
   {
     key: 'plan',
-    from: 'Organiser',
-    to:   'un voyage',
+    from: 'Maison',
+    to:   'Suède',
     modes: ['plane'],
-    meta: 'Créer un nouveau trajet',
-    when: 'Nouveau',
+    meta: 'Part dans 3h · 2h de vol',
+    when: 'en 3H',
   },
 ];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { collapsed } = useTheme();
+  const { user } = useCurrentUser();
   usePageMeta({ title: 'Accueil', description: 'Planifiez vos trajets du quotidien, suivez votre trajet en cours et retrouvez vos routes favorites.', path: '/' });
 
   return (
@@ -47,27 +51,20 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => navigate('/compte')}
-            className="pressable w-10 h-10 rounded-full border border-line bg-white flex items-center justify-center text-sm font-bold"
-            style={{ background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)', color: '#0E1A24' }}
+            className="pressable border border-line rounded-full"
             aria-label="Compte"
           >
-            SH
+            <UserAvatar user={user} size={40} />
           </button>
           <div className="md:hidden">
             <HubertLogo size="1.7rem" />
           </div>
-          <button
-            className="pressable relative w-10 h-10 rounded-full bg-white border border-line flex items-center justify-center"
-            aria-label="Notifications"
-          >
-            <i className="fa-regular fa-bell text-[15px] text-ink" />
-            <span className="absolute top-1.5 right-2 w-2 h-2 rounded-full bg-danger border-2 border-white" />
-          </button>
+          <NotificationCenter />
         </div>
 
         {/* hero */}
         <div className="mt-6">
-          <p className="eyebrow">Bonjour, Hubert</p>
+          <p className="eyebrow">Bonjour, {user?.pseudo || 'voyageur'}</p>
           <h1 className="text-[26px] md:text-[32px] font-bold tracking-tight leading-[1.1] mt-2 max-w-sm">
             C'est pas la destination qui compte, c'est le&nbsp;trajet.
           </h1>
@@ -112,7 +109,7 @@ export default function HomePage() {
         <section className="mt-7">
           <div className="flex items-center justify-between mb-3">
             <span className="h-section">Les plus utilisés</span>
-            <button className="text-[11px] font-semibold text-teal-hover">Tout voir</button>
+            <button className="text-[11px] font-semibold text-teal-hover hover:underline"><a href="/favoris">Tout voir</a></button>
           </div>
           <div className="flex flex-col gap-2">
             {frequent.map(f => (

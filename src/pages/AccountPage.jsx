@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
+import UserAvatar from '../components/user/UserAvatar';
+import NotificationCenter from '../components/notifications/NotificationCenter';
+import { useCurrentUser, useLogout } from '../services/userService';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 
@@ -36,7 +40,25 @@ function SettingsSection({ title, children }) {
 export default function AccountPage() {
   const [notifs, setNotifs] = useState(true);
   const { dark, toggle: toggleDark, collapsed } = useTheme();
+  const navigate = useNavigate();
+  const { user, loading } = useCurrentUser();
+  const logout = useLogout();
   usePageMeta({ title: 'Mon compte', description: 'Gérez votre profil, vos préférences et vos paramètres de sécurité.', path: '/compte', noIndex: true });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [loading, user, navigate]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  if (loading || !user) {
+    return null;
+  }
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
@@ -45,34 +67,29 @@ export default function AccountPage() {
           eyebrow="Votre espace"
           title="Compte"
           action={
-            <button
-              className="pressable w-10 h-10 rounded-full bg-white border border-line flex items-center justify-center"
-              aria-label="Aide"
-            >
-              <i className="fa-regular fa-circle-question text-[14px]" />
-            </button>
+            <div className="flex items-center gap-2">
+              <NotificationCenter />
+            </div>
           }
         />
 
         {/* Avatar hero */}
         <div className="flex flex-col items-center pt-3 pb-5">
-          <div
-            className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[32px] font-bold mb-3"
+          <UserAvatar
+            user={user}
+            size={88}
             style={{
-              background: 'linear-gradient(135deg, #FAEFD8, #E6DCC5)',
-              color: '#0E1A24',
               border: '4px solid #fff',
               boxShadow: '0 8px 24px -10px rgba(15,26,36,0.20)',
+              marginBottom: '12px',
             }}
-          >
-            SH
-          </div>
-          <p className="text-xl font-bold tracking-tight">Sir Hubert</p>
-          <p className="text-[12.5px] text-muted mt-0.5">sir.hubert@hubertapp.fr</p>
-          <button className="pressable mt-3 h-8 px-3.5 rounded-[10px] bg-white border border-line text-[12px] font-semibold text-ink inline-flex items-center gap-1.5">
+          />
+          <p className="text-xl font-bold tracking-tight">{user.pseudo || 'Utilisateur'}</p>
+          <p className="text-[12.5px] text-muted mt-0.5">{user.email}</p>
+          {/* <button className="pressable mt-3 h-8 px-3.5 rounded-[10px] bg-white border border-line text-[12px] font-semibold text-ink inline-flex items-center gap-1.5">
             <i className="fa-regular fa-pen-to-square text-[11px]" />
             Modifier le profil
-          </button>
+          </button> */}
         </div>
 
         {/* Stats strip */}
@@ -94,17 +111,17 @@ export default function AccountPage() {
           ))}
         </div>
 
-        <SettingsSection title="Coordonnées personnelles">
+        {/* <SettingsSection title="Coordonnées personnelles">
           <SettingRow icon="fa-user" label="Informations personnelles" sub="Nom, prénom, date de naissance"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
-          <SettingRow icon="fa-envelope" label="Adresse e-mail" sub="sir.hubert@hubertapp.fr · vérifiée"
+          <SettingRow icon="fa-envelope" label="Adresse e-mail" sub={`${user.email || ''} · vérifiée`}
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
-          <SettingRow icon="fa-key" label="Mot de passe & sécurité" sub="Dernière modification il y a 3 mois"
+          <SettingRow icon="fa-key" label="Mot de passe & sécurité" sub="Connexion via Google"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
-        </SettingsSection>
+        </SettingsSection> */}
 
         <SettingsSection title="Préférences">
-          <SettingRow icon="fa-bell" label="Notifications" sub="Alertes trafic, rappels de départ"
+          <SettingRow icon="fa-bell" label="Notifications" sub="Alertes trafic, rappels de départ, mail, SMS, push"
             trailing={<span className={`togg ${notifs ? '' : 'off'}`} />} onClick={() => setNotifs(v => !v)} />
           <SettingRow icon="fa-moon" label="Mode sombre" sub="Thème nuit activé globalement"
             trailing={<span className={`togg ${dark ? '' : 'off'}`} />} onClick={toggleDark} />
@@ -112,14 +129,48 @@ export default function AccountPage() {
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
           <SettingRow icon="fa-shield-halved" label="Gestion des consentements" sub="Cookies, données partagées"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
-          <SettingRow icon="fa-sliders" label="Paramètres avancés" sub="Modes préférés, accessibilité"
-            trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
+          <SettingRow icon="fa-sliders" label="Paramètres avancés" sub="Modes préférés, suppression de compte"
+            trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/parametres-avances')} />
+            <SettingRow icon="fa-circle-info" label="À propos de Hubert" sub="Version 1.0.0 · © 2025"
+            trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/a-propos')} />
         </SettingsSection>
 
-        <button className="w-full h-12 border border-[#F1C8C3] text-danger rounded-2xl font-bold text-[13.5px] hover:bg-danger hover:text-white transition-colors">
+        <section className="mb-5">
+          <h4 className="h-section mb-2 px-1">Partenariats</h4>
+          <button
+            onClick={() => navigate('/devenir-partenaire')}
+            className="pressable relative w-full overflow-hidden rounded-2xl p-4 text-left text-white"
+            style={{ background: 'linear-gradient(135deg, var(--color-teal) 0%, #0E1A24 100%)' }}
+          >
+            <i className="fa-solid fa-handshake absolute text-white/10 text-[70px] -right-3 -bottom-4 rotate-[-8deg]" />
+            <span className="inline-flex items-center gap-1.5 bg-white/15 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider mb-2">
+              <i className="fa-solid fa-star text-[9px]" />
+              Nouveau
+            </span>
+            <p className="text-[15px] font-bold leading-snug relative">Devenir partenaire ou sponsor</p>
+            <p className="text-[12px] text-white/80 mt-1 relative max-w-[240px]">
+              Fast-foods, hôtels, sociétés de transport… faites connaître votre enseigne sur Hubert.
+            </p>
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold mt-3 relative">
+              Découvrir le programme
+              <i className="fa-solid fa-arrow-right text-[11px]" />
+            </span>
+          </button>
+        </section>
+
+        <SettingsSection title="Informations légales">
+          <SettingRow icon="fa-scale-balanced" label="Mentions légales" sub="Éditeur, hébergement, propriété intellectuelle"
+            trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/mentions-legales')} />
+        </SettingsSection>
+
+        <button
+          onClick={handleLogout}
+          className="w-full h-12 border border-[#F1C8C3] text-danger rounded-2xl font-bold text-[13.5px] hover:bg-danger hover:text-white transition-colors"
+        >
           <i className="fa-solid fa-arrow-right-from-bracket mr-2" />
           Se déconnecter
         </button>
+
         <p className="text-center text-[10.5px] text-soft font-mono mt-4">
           Hubert v1.0.0 · © 2025
         </p>

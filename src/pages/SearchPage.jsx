@@ -7,6 +7,7 @@ import EndpointDot from '../components/ui/EndpointDot';
 import { autocompleteResults, savedPlaces, itinerarySteps } from '../data/mock';
 import { usePageMeta } from '../hooks/usePageMeta';
 
+
 /* ──────────────────────────────────────────────────────────────────────────
    Step 1 — Destination search (autocomplete + saved places + recents)
    ────────────────────────────────────────────────────────────────────────── */
@@ -90,8 +91,28 @@ function DestinationStep({ query, onChange, onSelect, onSelectSaved }) {
 /* ──────────────────────────────────────────────────────────────────────────
    Step 2 — Route builder (drag-to-reorder stops)
    ────────────────────────────────────────────────────────────────────────── */
+const TRANSPORT_MODES = [
+  { id: 'tous',        label: 'Tous',        ic: 'fa-route'          },
+  { id: 'transports',  label: 'Transports',  ic: 'fa-train-tram'     },
+  { id: 'voiture',     label: 'Voiture',     ic: 'fa-car-side'       },
+  { id: 'marche',      label: 'Marche',      ic: 'fa-person-walking' },
+  { id: 'velo',        label: 'Vélo',        ic: 'fa-bicycle'        },
+];
+
 function RouteStep({ stops, setStops, onConfirm }) {
   const [draggingIdx, setDraggingIdx] = useState(null);
+  const [selectedModes, setSelectedModes] = useState(['tous']);
+
+  const toggleMode = id => {
+    setSelectedModes(prev => {
+      if (id === 'tous') return ['tous'];
+      const withoutTous = prev.filter(m => m !== 'tous');
+      const next = withoutTous.includes(id)
+        ? withoutTous.filter(m => m !== id)
+        : [...withoutTous, id];
+      return next.length === 0 ? ['tous'] : next;
+    });
+  };
   const containerRef = useRef(null);
   const dragRef = useRef({ active: false, idx: null });
 
@@ -250,23 +271,22 @@ function RouteStep({ stops, setStops, onConfirm }) {
 
       <p className="px-5 pt-2 pb-2 h-section">Modes de transport</p>
       <div className="px-4 pb-4 flex flex-wrap gap-2">
-        {[
-          { label: 'Tous',        ic: 'fa-route',           active: true },
-          { label: 'Transports',  ic: 'fa-train-tram'    },
-          { label: 'Voiture',     ic: 'fa-car-side'      },
-          { label: 'Marche',      ic: 'fa-person-walking' },
-          { label: 'Vélo',        ic: 'fa-bicycle'       },
-        ].map((m, i) => (
-          <button
-            key={i}
-            className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold ${
-              m.active ? 'bg-ink text-white border border-ink' : 'bg-white text-ink border border-line'
-            }`}
-          >
-            <i className={`fa-solid ${m.ic} text-[12px]`} />
-            {m.label}
-          </button>
-        ))}
+        {TRANSPORT_MODES.map(m => {
+          const active = selectedModes.includes(m.id);
+          return (
+            <button
+              key={m.id}
+              onClick={() => toggleMode(m.id)}
+              aria-pressed={active}
+              className={`pressable inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors ${
+                active ? 'bg-ink text-white border border-ink' : 'bg-white text-ink border border-line'
+              }`}
+            >
+              <i className={`fa-solid ${m.ic} text-[12px]`} />
+              {m.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex-1" />
@@ -434,16 +454,22 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
             )}
           </div>
           <div className="flex items-center gap-1.5 ml-2 shrink-0">
-            {!mini && (
-              <button
-                onClick={() => setSaved(v => !v)}
-                className={`pressable w-9 h-9 rounded-xl flex items-center justify-center ${
-                  saved ? 'bg-danger-soft text-danger' : 'bg-line-soft text-soft'
-                }`}
-              >
-                <i className={`fa-${saved ? 'solid' : 'regular'} fa-heart`} />
-              </button>
+            {(mini || snap === 'peek') && (
+                <button
+                  className="pressable w-9 h-9 rounded-xl bg-teal text-white flex items-center justify-center"
+                  aria-label="Lancer la navigation"
+                >
+                  <i className="fa-solid fa-play text-[12px]" />
+                </button>
             )}
+            <button
+              onClick={() => setSaved(v => !v)}
+              className={`pressable w-9 h-9 rounded-xl flex items-center justify-center ${
+                saved ? 'bg-danger-soft text-danger' : 'bg-line-soft text-soft'
+              }`}
+            >
+              <i className={`fa-${saved ? 'solid' : 'regular'} fa-heart`} />
+            </button>
             <button
               onClick={mini ? expand : collapse}
               className="pressable w-9 h-9 rounded-xl bg-line-soft text-soft flex items-center justify-center"
