@@ -1,26 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { gql } from "@apollo/client";
-import { useQuery, useMutation } from '@apollo/client/react';
+import { useMutation } from '@apollo/client/react';
+import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
 import { setToken } from './tokenStore';
-import { NavLink } from 'react-router-dom';
+import { useCurrentUser, useLogout } from '../services/userService';
+import UserAvatar from '../components/user/UserAvatar';
 
 const GOOGLE_WEB_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-const GET_ME_QUERY = gql`
-  query GetMe {
-    getMe {
-      googleId
-      email
-      age
-      pseudo
-      role
-      created_at
-      updated_at
-    }
-  }
-`;
 
 const LOGIN_WITH_GOOGLE_MUTATION = gql`
   mutation LoginWithGoogle($idToken: String!) {
@@ -31,22 +19,17 @@ const LOGIN_WITH_GOOGLE_MUTATION = gql`
 `;
 
 
-function AssetUser({ user }) {
+function AssetUser({ user, onLogout }) {
   return (
     <div style={styles.profileCard}>
-      <div style={styles.avatar}>
-        {user.pseudo ? user.pseudo.charAt(0).toUpperCase() : 'U'}
-      </div>
+      <UserAvatar user={user} size={48} />
       <div style={styles.profileDetails}>
         <h3 style={styles.profileName}>{user.pseudo || "Utilisateur"}</h3>
         <p style={styles.profileEmail}>{user.email}</p>
         <span style={styles.badge}>{user.role || "Membre"}</span>
       </div>
       <div>
-        <button onClick={() => {
-          setToken(null);
-          window.location.reload();
-        }}>
+        <button onClick={onLogout}>
           Se déconnecter
         </button>
       </div>
@@ -65,20 +48,30 @@ function GoogleIcon() {
   );
 }
 
-export default function AuthPages({ onSuccess }) {
+export default function AuthPages({ onSuccess, redirectTo = '/' }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  
+
   const isNative = Capacitor.isNativePlatform();
   const googleButtonRef = useRef(null);
+  const navigate = useNavigate();
 
-  const { loading, data, refetch } = useQuery(GET_ME_QUERY, {
-    errorPolicy: 'all',
-    fetchPolicy: 'network-only',
-  });
+  const { user, loading, refetch } = useCurrentUser();
+  const logout = useLogout();
 
   const [loginWithGoogle] = useMutation(LOGIN_WITH_GOOGLE_MUTATION);
-  const isAuthenticated = !!data?.getMe;
+  const isAuthenticated = !!user;
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    await refetch();
+  }, [logout, refetch]);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [loading, isAuthenticated, navigate, redirectTo]);
 
   const completeLogin = useCallback(async (idToken) => {
     setIsConnecting(true);
@@ -88,13 +81,14 @@ export default function AuthPages({ onSuccess }) {
       await setToken(result.loginWithGoogle.accessToken);
       await refetch();
       if (onSuccess) onSuccess();
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       console.error('Erreur lors de la connexion Google:', err);
       setErrorMessage("La connexion a échoué, merci de réessayer.");
     } finally {
       setIsConnecting(false);
     }
-  }, [loginWithGoogle, refetch, onSuccess]);
+  }, [loginWithGoogle, refetch, onSuccess, navigate, redirectTo]);
 
   useEffect(() => {
     if (isNative) {
@@ -172,17 +166,6 @@ export default function AuthPages({ onSuccess }) {
 
   return (
     <div style={styles.container}>
-      {/* <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors ${
-                  isActive ? 'text-teal' : 'text-soft hover:text-muted'
-                }`
-              }
-        ></NavLink> */}
-      <a href="/">"0"</a>
       <div style={styles.card}>
 
         <div style={styles.header}>
@@ -218,7 +201,7 @@ export default function AuthPages({ onSuccess }) {
               {errorMessage && <p style={styles.errorText}>{errorMessage}</p>}
             </>
           ) : (
-            <AssetUser user={data.getMe} />
+            <AssetUser user={user} onLogout={handleLogout} />
           )}
         </div>
 
