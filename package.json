@@ -17,6 +17,7 @@
     "@capacitor/core": "^8.3.3",
     "@capacitor/ios": "^8.3.3",
     "@capacitor/preferences": "^8.0.1",
+    "@capgo/capacitor-social-login": "^8.3.36",
     "@ionic/vue": "^8.8.6",
     "@ionic/vue-router": "^8.8.6",
     "@tailwindcss/vite": "^4.1.7",
