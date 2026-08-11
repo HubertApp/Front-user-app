@@ -1,0 +1,25 @@
+# Sans ce fichier, `COPY . .` copie les 268 Mo de node_modules de l'hôte
+# par-dessus ceux installés dans l'image — des binaires Windows dans une image
+# Linux, donc un build qui casse ou qui gonfle inutilement.
+node_modules
+dist
+
+# Secrets et config locale : ne doivent jamais entrer dans l'image.
+# Les variables VITE_* se passent en --build-arg (voir Dockerfile).
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+.claude
+
+# Copie morte de tout src/, non branchée au build.
+hubert-converted
+
+# Plateformes natives Capacitor : générées, pas nécessaires au build web.
+android
+ios
+
+*.log
+npm-debug.log*

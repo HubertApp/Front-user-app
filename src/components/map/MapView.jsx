@@ -5,6 +5,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const DEFAULT_CENTER = [6.1727, 49.1193];
 const DEFAULT_STYLE = 'mapbox://styles/mapbox/streets-v12';
 
+// Identité stable : évite de relancer l'effet des marqueurs à chaque rendu des
+// pages qui n'en passent pas.
+const EMPTY_MARKERS = [];
+
 const MapPlaceholder = memo(function MapPlaceholder({ withRoute = true, withPin = true }) {
   return (
     <div className="absolute inset-0 overflow-hidden map-placeholder">
@@ -101,11 +105,29 @@ export default function MapView({
   className = 'absolute inset-0',
   withRoute = true,
   withPin = true,
+  markers = EMPTY_MARKERS,
+  onReady,
 }) {
   const containerRef = useRef(null);
+  const markersRef = useRef([]);
   const [error, setError] = useState(false);
-  const [retryKey, setRetryKey] = useState(0);
+  // Exposé en state, et non en ref, pour que les effets ci-dessous se relancent
+  // dès que la carte existe. Volontairement posé à la construction et non sur
+  // l'événement `load` : dans un onglet d'arrière-plan, rAF est suspendu et
+  // `load` ne part jamais — les marqueurs, simples overlays DOM, n'en ont pas
+  // besoin.
+  const [map, setMap] = useState(null);
 
+  // Lus une seule fois à l'initialisation, sans devenir des dépendances d'effet.
+  const centerRef = useRef(center);
+  const zoomRef = useRef(zoom);
+  const onReadyRef = useRef(onReady);
+  centerRef.current = center;
+  zoomRef.current = zoom;
+  onReadyRef.current = onReady;
+
+  // Initialisation. Volontairement indépendante de `center`/`zoom` : les inclure
+  // ici détruirait et reconstruirait tout le canvas WebGL à chaque recentrage.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -113,34 +135,87 @@ export default function MapView({
     const token = import.meta.env.VITE_MAPBOX_TOKEN;
     if (!token) { setError(true); return; }
 
-    let map;
     let cancelled = false;
+    let timer;
+    let instance;
+
+    // Le watchdog ne vaut que si la page est visible : en arrière-plan Mapbox
+    // ne compose aucune frame, `load` n'arrive pas, et on afficherait à tort
+    // le placeholder d'erreur sur une carte parfaitement saine.
+    const armWatchdog = () => {
+      if (document.hidden || timer) return;
+      timer = setTimeout(() => !cancelled && setError(true), 12_000);
+    };
+    const onVisibility = () => armWatchdog();
 
     try {
       mapboxgl.accessToken = token;
-      const timer = setTimeout(() => !cancelled && setError(true), 12_000);
+      armWatchdog();
+      document.addEventListener('visibilitychange', onVisibility);
 
-      map = new mapboxgl.Map({
+      instance = new mapboxgl.Map({
         container,
         style,
-        center,
-        zoom,
+        center: centerRef.current,
+        zoom: zoomRef.current,
         dragRotate: false,
         pitchWithRotate: false,
         attributionControl: false,
       });
-      map.once('load', () => clearTimeout(timer));
-      map.on('error', () => { clearTimeout(timer); setError(true); });
+
+      instance.once('load', () => {
+        clearTimeout(timer);
+        if (cancelled) return;
+        setError(false);
+        onReadyRef.current?.(instance);
+      });
+      instance.on('error', () => { clearTimeout(timer); setError(true); });
+
+      setMap(instance);
     } catch {
       setError(true);
     }
 
     return () => {
       cancelled = true;
-      map?.remove();
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      setMap(null);
+      instance?.remove();
     };
+  }, [style]);
+
+  // Recentrage : on anime la caméra plutôt que de reconstruire la carte.
+  useEffect(() => {
+    if (!map) return;
+    map.flyTo({ center, zoom, essential: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryKey, center[0], center[1], zoom, style]);
+  }, [map, center[0], center[1], zoom]);
+
+  // Marqueurs. Pour quelques dizaines de points, `Marker` reste plus simple
+  // qu'un couple addSource/addLayer, et donne un onClick par marqueur.
+  useEffect(() => {
+    if (!map) return;
+
+    markersRef.current = markers
+      .filter(m => Number.isFinite(m.longitude) && Number.isFinite(m.latitude))
+      .map(m => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'map-stop-marker';
+        el.setAttribute('aria-label', m.label || 'Arrêt');
+        if (m.label) el.title = m.label;
+        if (m.onClick) el.addEventListener('click', m.onClick);
+        return new mapboxgl.Marker({ element: el })
+          .setLngLat([m.longitude, m.latitude])
+          .addTo(map);
+      });
+
+    return () => {
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
+    };
+  }, [map, markers]);
 
   return (
     <div className={className} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>

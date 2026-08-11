@@ -238,3 +238,23 @@ body {
 [data-theme="hubert-dark"] .map-placeholder {
   background: linear-gradient(180deg, #1A2B38 0%, #142030 100%);
 }
+
+/* Marqueur d'arrêt posé sur la carte Mapbox (élément DOM, pas du Tailwind :
+   il est créé impérativement par MapView) */
+.map-stop-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 2.5px solid #FFFFFF;
+  background: var(--color-teal);
+  box-shadow: 0 1px 4px rgba(14, 26, 36, 0.35);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+.map-stop-marker:hover {
+  transform: scale(1.35);
+}
+[data-theme="hubert-dark"] .map-stop-marker {
+  border-color: var(--color-warm-card);
+}
