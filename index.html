@@ -94,6 +94,9 @@
       </p>
     </noscript>
     <div id="root"></div>
+    <!-- Config injectée à l'exécution (voir src/config/gatewayUrl.js) — doit
+         être chargée avant le bundle applicatif. -->
+    <script src="/env.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
