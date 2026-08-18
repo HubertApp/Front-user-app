@@ -76,7 +76,7 @@ export default function TrafficPage() {
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
       <main id="main-content" className="max-w-2xl mx-auto px-5 md:px-8">
         <PageHeader
-          eyebrow="Aujourd'hui · 08:14"
+          eyebrow={`Aujourd'hui · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
           title="Infos trafic"
           action={
             <button

@@ -1,8 +1,7 @@
 import { HttpLink, ApolloClient, InMemoryCache } from "@apollo/client";
 import { setContext } from '@apollo/client/link/context';
 import { getToken } from './pages/tokenStore.js';
-
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:4000";
+import { GATEWAY_URL } from './config/gatewayUrl.js';
 
 const httpLink = new HttpLink({ uri: GATEWAY_URL, credentials: "include" });
 
