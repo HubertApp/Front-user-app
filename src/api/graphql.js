@@ -1,11 +1,7 @@
-const ENDPOINT = import.meta.env.VITE_AOM_API_URL;
+import { GATEWAY_URL } from '../config/gatewayUrl.js';
 
 export async function gqlRequest(query, variables = {}, { signal } = {}) {
-  if (!ENDPOINT) {
-    throw new Error("L'URL du service n'est pas configurée (VITE_AOM_API_URL).");
-  }
-
-  const response = await fetch(ENDPOINT, {
+  const response = await fetch(GATEWAY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
