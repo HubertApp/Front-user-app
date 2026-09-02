@@ -175,7 +175,7 @@ export default function FavoritesPage() {
             <div
               ref={scrollRef}
               onScroll={onScroll}
-              className="flex justify-center gap-3 overflow-x-auto px-5 pb-2 pt-1 snap-x snap-mandatory md:justify-start"
+              className="flex justify-start gap-3 overflow-x-auto px-5 pb-2 pt-1 snap-x snap-mandatory"
             >
               {favoriteRoutes.map(r => (
                 <FavoriteCard key={r.id} {...r} />
