@@ -5,7 +5,10 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { ThemeProvider } from '../../src/context/ThemeContext';
 import AccountPage from '../../src/pages/AccountPage';
-import { GET_ME_QUERY } from '../../src/services/userService';
+import {
+  GET_ME_QUERY,
+  UPDATE_NOTIFICATION_PREFERENCES_MUTATION,
+} from '../../src/services/userService';
 import { GET_ALL_NOTIFICATIONS_QUERY } from '../../src/services/notificationService';
 
 vi.mock('@capacitor/preferences', () => ({
@@ -28,11 +31,29 @@ function meMock(user) {
   };
 }
 
-function renderAccountPage(user) {
+function updateNotifMock(disabledChannels, resultDisabledChannels) {
+  return {
+    request: {
+      query: UPDATE_NOTIFICATION_PREFERENCES_MUTATION,
+      variables: { disabledChannels },
+    },
+    result: {
+      data: {
+        updateNotificationPreferences: {
+          __typename: 'GetUserResponse',
+          googleId: 'google-123',
+          notificationChannelsDisabled: resultDisabledChannels,
+        },
+      },
+    },
+  };
+}
+
+function renderAccountPage(user, extraMocks = []) {
   return render(
     <MemoryRouter initialEntries={['/compte']}>
       <ThemeProvider>
-        <MockedProvider mocks={[meMock(user), notificationsMock]}>
+        <MockedProvider mocks={[meMock(user), notificationsMock, ...extraMocks]}>
           <Routes>
             <Route path="/compte" element={<AccountPage />} />
             <Route path="/login" element={<div>Page de connexion</div>} />
@@ -51,6 +72,7 @@ const user = {
   pseudo: 'noe',
   role: 'user',
   photo: null,
+  notificationChannelsDisabled: [],
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -82,5 +104,43 @@ describe('AccountPage', () => {
 
     await waitFor(() => expect(Preferences.remove).toHaveBeenCalledWith({ key: 'jwt' }));
     expect(await screen.findByText('Page de connexion')).toBeInTheDocument();
+  });
+
+  it('should disable in-app notifications when the toggle is clicked', async () => {
+    renderAccountPage(user, [
+      updateNotifMock(['IN_APP'], ['IN_APP']),
+      meMock({ ...user, notificationChannelsDisabled: ['IN_APP'] }),
+    ]);
+
+    const label = await screen.findByText("Notifications dans l'app");
+    const row = label.closest('.pressable');
+    expect(row.querySelector('.togg')).not.toHaveClass('off');
+
+    await userEvent.click(row);
+
+    await waitFor(() =>
+      expect(row.querySelector('.togg')).toHaveClass('off'),
+    );
+  });
+
+  it('should re-enable email notifications when the toggle is clicked again', async () => {
+    const userWithEmailDisabled = {
+      ...user,
+      notificationChannelsDisabled: ['EMAIL'],
+    };
+    renderAccountPage(userWithEmailDisabled, [
+      updateNotifMock([], []),
+      meMock({ ...user, notificationChannelsDisabled: [] }),
+    ]);
+
+    const label = await screen.findByText('Notifications par e-mail');
+    const row = label.closest('.pressable');
+    expect(row.querySelector('.togg')).toHaveClass('off');
+
+    await userEvent.click(row);
+
+    await waitFor(() =>
+      expect(row.querySelector('.togg')).not.toHaveClass('off'),
+    );
   });
 });

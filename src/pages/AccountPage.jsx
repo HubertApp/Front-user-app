@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
 import UserAvatar from '../components/user/UserAvatar';
 import NotificationCenter from '../components/notifications/NotificationCenter';
-import { useCurrentUser, useLogout } from '../services/userService';
+import {
+  useCurrentUser,
+  useLogout,
+  useUpdateNotificationPreferences,
+} from '../services/userService';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 
@@ -38,11 +42,11 @@ function SettingsSection({ title, children }) {
 }
 
 export default function AccountPage() {
-  const [notifs, setNotifs] = useState(true);
   const { dark, toggle: toggleDark, collapsed } = useTheme();
   const navigate = useNavigate();
   const { user, loading } = useCurrentUser();
   const logout = useLogout();
+  const { updateNotificationPreferences } = useUpdateNotificationPreferences();
   usePageMeta({ title: 'Mon compte', description: 'Gérez votre profil, vos préférences et vos paramètres de sécurité.', path: '/compte', noIndex: true });
 
   useEffect(() => {
@@ -59,6 +63,15 @@ export default function AccountPage() {
   if (loading || !user) {
     return null;
   }
+
+  const disabledChannels = user.notificationChannelsDisabled || [];
+  const isChannelEnabled = (channel) => !disabledChannels.includes(channel);
+  const toggleChannel = (channel) => {
+    const next = isChannelEnabled(channel)
+      ? [...disabledChannels, channel]
+      : disabledChannels.filter((c) => c !== channel);
+    updateNotificationPreferences(next);
+  };
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
@@ -121,8 +134,10 @@ export default function AccountPage() {
         </SettingsSection> */}
 
         <SettingsSection title="Préférences">
-          <SettingRow icon="fa-bell" label="Notifications" sub="Alertes trafic, rappels de départ, mail, SMS, push"
-            trailing={<span className={`togg ${notifs ? '' : 'off'}`} />} onClick={() => setNotifs(v => !v)} />
+          <SettingRow icon="fa-bell" label="Notifications dans l'app" sub="Alertes trafic, rappels de départ"
+            trailing={<span className={`togg ${isChannelEnabled('IN_APP') ? '' : 'off'}`} />} onClick={() => toggleChannel('IN_APP')} />
+          <SettingRow icon="fa-envelope" label="Notifications par e-mail" sub="Récapitulatifs et alertes envoyés par e-mail"
+            trailing={<span className={`togg ${isChannelEnabled('EMAIL') ? '' : 'off'}`} />} onClick={() => toggleChannel('EMAIL')} />
           <SettingRow icon="fa-moon" label="Mode sombre" sub="Thème nuit activé globalement"
             trailing={<span className={`togg ${dark ? '' : 'off'}`} />} onClick={toggleDark} />
           <SettingRow icon="fa-language" label="Langue & région" sub="Français · Grand Est"
