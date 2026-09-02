@@ -93,10 +93,11 @@ function DestinationStep({ query, onChange, onSelect, onSelectSaved }) {
    ────────────────────────────────────────────────────────────────────────── */
 const TRANSPORT_MODES = [
   { id: 'tous',        label: 'Tous',        ic: 'fa-route'          },
-  { id: 'transports',  label: 'Transports',  ic: 'fa-train-tram'     },
+  { id: 'tram',        label: 'Tram',        ic: 'fa-train-tram'     },
   { id: 'voiture',     label: 'Voiture',     ic: 'fa-car-side'       },
   { id: 'marche',      label: 'Marche',      ic: 'fa-person-walking' },
   { id: 'velo',        label: 'Vélo',        ic: 'fa-bicycle'        },
+  { id: 'avion',       label: 'Avion',       ic: 'fa-plane'          },
 ];
 
 function RouteStep({ stops, setStops, onConfirm }) {
