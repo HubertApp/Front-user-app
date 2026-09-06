@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -98,7 +98,7 @@ const MapPlaceholder = memo(function MapPlaceholder({ withRoute = true, withPin 
   );
 });
 
-export default function MapView({
+const MapView = forwardRef(function MapView({
   center = DEFAULT_CENTER,
   zoom = 13,
   style = DEFAULT_STYLE,
@@ -107,7 +107,7 @@ export default function MapView({
   withPin = true,
   markers = EMPTY_MARKERS,
   onReady,
-}) {
+}, ref) {
   const containerRef = useRef(null);
   const markersRef = useRef([]);
   const [error, setError] = useState(false);
@@ -217,10 +217,34 @@ export default function MapView({
     };
   }, [map, markers]);
 
+  // Expose des commandes de haut niveau (zoom, géolocalisation) plutôt que
+  // l'instance mapboxgl brute : les pages appelantes n'ont pas à connaître
+  // l'API mapbox-gl, et les appels restent no-op tant que la carte n'est pas
+  // prête (`map` state encore null).
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => map?.zoomIn(),
+    zoomOut: () => map?.zoomOut(),
+    locate: (onError) => {
+      if (!map) return;
+      if (!navigator.geolocation) { onError?.('unsupported'); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos => map.flyTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 15,
+          essential: true,
+        }),
+        () => onError?.('denied'),
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    },
+  }), [map]);
+
   return (
     <div className={className} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
       {error && <MapPlaceholder withRoute={withRoute} withPin={withPin} />}
     </div>
   );
-}
+});
+
+export default MapView;

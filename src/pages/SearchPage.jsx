@@ -321,6 +321,7 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
   const [mini, setMini] = useState(false);
   const drag = useRef({ on: false, startY: 0, startH: 0, moved: false });
   const curH = useRef(SNAPS.mid);
+  const mapRef = useRef(null);
 
   const snapTo = key => {
     const h = SNAPS[key];
@@ -381,7 +382,34 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
 
   return (
     <div className="relative h-full">
-      <MapView className="absolute inset-0 z-0" withRoute withPin />
+      <MapView ref={mapRef} className="absolute inset-0 z-0" withRoute withPin />
+
+      {/* Contrôles carte (zoom/localiser) — flottent juste au-dessus du bottom
+          sheet, à sa hauteur courante (peek/mid/full/mini), pour ne jamais
+          chevaucher la carte résumé du dessus quel que soit le nombre d'étapes. */}
+      <div
+        className="absolute right-4 z-20 flex flex-col gap-2 md:right-6"
+        style={{
+          bottom: panelH + 16,
+          transition: animating ? 'bottom 0.32s cubic-bezier(0.32, 0.72, 0, 1)' : 'none',
+        }}
+      >
+        {[
+          { ic: 'fa-location-crosshairs', label: 'Ma position', action: () => mapRef.current?.locate() },
+          { ic: 'fa-plus', label: 'Zoomer', action: () => mapRef.current?.zoomIn() },
+          { ic: 'fa-minus', label: 'Dézoomer', action: () => mapRef.current?.zoomOut() },
+        ].map((c, i) => (
+          <button
+            key={i}
+            onClick={c.action}
+            aria-label={c.label}
+            className="pressable w-10 h-10 rounded-xl bg-white border border-line flex items-center justify-center"
+            style={{ boxShadow: '0 4px 12px -4px rgba(15,26,36,0.18)' }}
+          >
+            <i className={`fa-solid ${c.ic} text-sm`} />
+          </button>
+        ))}
+      </div>
 
       <button
         onClick={onBack}
@@ -413,10 +441,10 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
           ))}
         </div>
         <div className="flex flex-col gap-1.5">
-          <button onClick={onEdit} className="w-8 h-8 rounded-[10px] border border-line bg-white text-ink flex items-center justify-center text-[12px]" aria-label="Éditer">
+          <button onClick={onEdit} className="tap-flash w-8 h-8 rounded-[10px] border border-line bg-white text-ink flex items-center justify-center text-[12px]" aria-label="Éditer">
             <i className="fa-solid fa-pen" />
           </button>
-          <button onClick={onSwap} className="w-8 h-8 rounded-[10px] border border-line bg-white text-ink flex items-center justify-center text-[12px]" aria-label="Inverser">
+          <button onClick={onSwap} className="tap-flash w-8 h-8 rounded-[10px] border border-line bg-white text-ink flex items-center justify-center text-[12px]" aria-label="Inverser">
             <i className="fa-solid fa-arrows-up-down" />
           </button>
         </div>
