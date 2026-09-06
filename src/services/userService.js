@@ -18,8 +18,18 @@ export const GET_ME_QUERY = gql`
       pseudo
       role
       photo
+      notificationChannelsDisabled
       created_at
       updated_at
+    }
+  }
+`;
+
+export const UPDATE_NOTIFICATION_PREFERENCES_MUTATION = gql`
+  mutation UpdateNotificationPreferences($disabledChannels: [String!]!) {
+    updateNotificationPreferences(disabledChannels: $disabledChannels) {
+      googleId
+      notificationChannelsDisabled
     }
   }
 `;
@@ -59,4 +69,24 @@ export function useDeleteAccount() {
   }
 
   return { deleteAccount, loading };
+}
+
+// GetUserResponse n'a pas de champ `id`, donc l'InMemoryCache d'Apollo ne
+// normalise pas cet objet : le résultat de la mutation ne fusionne pas tout
+// seul avec le cache de GET_ME_QUERY. On force un refetch pour rester simple
+// et cohérent (même logique que useDeleteAccount qui vide tout le store).
+export function useUpdateNotificationPreferences() {
+  const [mutate, { loading }] = useMutation(
+    UPDATE_NOTIFICATION_PREFERENCES_MUTATION,
+    {
+      refetchQueries: [{ query: GET_ME_QUERY }],
+      awaitRefetchQueries: true,
+    },
+  );
+
+  async function updateNotificationPreferences(disabledChannels) {
+    await mutate({ variables: { disabledChannels } });
+  }
+
+  return { updateNotificationPreferences, loading };
 }
