@@ -13,6 +13,7 @@ const AuthPages    = lazy(() => import('./pages/AuthPages'));
 const LegalNoticePage = lazy(() => import('./pages/LegalNoticePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const AdvancedSettingsPage = lazy(() => import('./pages/AdvancedSettingsPage'));
+const NotificationsSettingsPage = lazy(() => import('./pages/NotificationsSettingsPage'));
 const BecomePartnerPage = lazy(() => import('./pages/BecomePartnerPage'));
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/mentions-legales" element={<LegalNoticePage />} />
             <Route path="/a-propos" element={<AboutPage />} />
             <Route path="/parametres-avances" element={<AdvancedSettingsPage />} />
+            <Route path="/notifications" element={<NotificationsSettingsPage />} />
             <Route path="/devenir-partenaire" element={<BecomePartnerPage />} />
           </Routes>
         </Suspense>
