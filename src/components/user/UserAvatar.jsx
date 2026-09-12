@@ -31,6 +31,7 @@ export default function UserAvatar({ user, size = 40, className = '', style = {}
         alt={user.pseudo || 'Photo de profil'}
         className={className}
         style={baseStyle}
+        referrerPolicy="no-referrer"
         onError={() => setPhotoFailed(true)}
       />
     );

@@ -28,14 +28,15 @@ function meMock(user) {
   };
 }
 
-function renderAccountPage(user) {
+function renderAccountPage(user, extraMocks = []) {
   return render(
     <MemoryRouter initialEntries={['/compte']}>
       <ThemeProvider>
-        <MockedProvider mocks={[meMock(user), notificationsMock]}>
+        <MockedProvider mocks={[meMock(user), notificationsMock, ...extraMocks]}>
           <Routes>
             <Route path="/compte" element={<AccountPage />} />
             <Route path="/login" element={<div>Page de connexion</div>} />
+            <Route path="/notifications" element={<div>Page notifications</div>} />
           </Routes>
         </MockedProvider>
       </ThemeProvider>
@@ -51,6 +52,7 @@ const user = {
   pseudo: 'noe',
   role: 'user',
   photo: null,
+  notificationChannelsDisabled: [],
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -82,5 +84,21 @@ describe('AccountPage', () => {
 
     await waitFor(() => expect(Preferences.remove).toHaveBeenCalledWith({ key: 'jwt' }));
     expect(await screen.findByText('Page de connexion')).toBeInTheDocument();
+  });
+
+  it('should show a summary of the notification preferences and link to the dedicated page', async () => {
+    renderAccountPage(user);
+
+    const label = await screen.findByText('Notifications');
+    expect(screen.getByText('Activées')).toBeInTheDocument();
+
+    await userEvent.click(label.closest('.pressable'));
+
+    expect(await screen.findByText('Page notifications')).toBeInTheDocument();
+  });
+
+  it('should summarize partially and fully disabled channels', async () => {
+    renderAccountPage({ ...user, notificationChannelsDisabled: ['EMAIL'] });
+    expect(await screen.findByText('E-mail désactivé')).toBeInTheDocument();
   });
 });

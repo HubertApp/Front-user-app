@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
@@ -7,38 +7,17 @@ import NotificationCenter from '../components/notifications/NotificationCenter';
 import { useCurrentUser, useLogout } from '../services/userService';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { SettingRow, SettingsSection } from '../components/ui/SettingRow';
 
-function SettingRow({ icon, label, sub, trailing, onClick }) {
-  return (
-    <div
-      onClick={onClick}
-      className={`flex items-center gap-3 px-3.5 py-3.5 ${onClick ? 'pressable' : ''}`}
-    >
-      <span className="w-8 h-8 rounded-[10px] bg-teal-soft text-teal-hover inline-flex items-center justify-center text-[13px] shrink-0">
-        <i className={`fa-solid ${icon}`} />
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-ink">{label}</p>
-        {sub && <p className="text-[11.5px] text-muted mt-0.5">{sub}</p>}
-      </div>
-      {trailing}
-    </div>
-  );
-}
-
-function SettingsSection({ title, children }) {
-  return (
-    <section className="mb-5">
-      <h4 className="h-section mb-2 px-1">{title}</h4>
-      <div className="bg-warm-card rounded-2xl border border-line divide-y divide-line-soft overflow-hidden">
-        {children}
-      </div>
-    </section>
-  );
+function notificationsSummary(disabledChannels) {
+  if (disabledChannels.length === 0) return 'Activées';
+  if (disabledChannels.length >= 2) return 'Toutes désactivées';
+  return disabledChannels.includes('EMAIL')
+    ? 'E-mail désactivé'
+    : "Dans l'app désactivées";
 }
 
 export default function AccountPage() {
-  const [notifs, setNotifs] = useState(true);
   const { dark, toggle: toggleDark, collapsed } = useTheme();
   const navigate = useNavigate();
   const { user, loading } = useCurrentUser();
@@ -59,6 +38,8 @@ export default function AccountPage() {
   if (loading || !user) {
     return null;
   }
+
+  const disabledChannels = user.notificationChannelsDisabled || [];
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
@@ -121,8 +102,8 @@ export default function AccountPage() {
         </SettingsSection> */}
 
         <SettingsSection title="Préférences">
-          <SettingRow icon="fa-bell" label="Notifications" sub="Alertes trafic, rappels de départ, mail, SMS, push"
-            trailing={<span className={`togg ${notifs ? '' : 'off'}`} />} onClick={() => setNotifs(v => !v)} />
+          <SettingRow icon="fa-bell" label="Notifications" sub={notificationsSummary(disabledChannels)}
+            trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/notifications')} />
           <SettingRow icon="fa-moon" label="Mode sombre" sub="Thème nuit activé globalement"
             trailing={<span className={`togg ${dark ? '' : 'off'}`} />} onClick={toggleDark} />
           <SettingRow icon="fa-language" label="Langue & région" sub="Français · Grand Est"
