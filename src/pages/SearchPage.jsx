@@ -4,18 +4,64 @@ import MapView from '../components/map/MapView';
 import AutocompleteItem from '../components/search/AutocompleteItem';
 import ItineraryStep from '../components/itinerary/ItineraryStep';
 import EndpointDot from '../components/ui/EndpointDot';
-import { autocompleteResults, savedPlaces, itinerarySteps } from '../data/mock';
+import { savedPlaces, itinerarySteps } from '../data/mock';
 import { usePageMeta } from '../hooks/usePageMeta';
+import { useGeneralSearch } from '../hooks/useGeneralSearch';
+import { isSearchableQuery } from '../utils/searchQuery';
+import { resolveResultTarget } from '../utils/searchResults';
 
+
+// Pictogramme par type de résultat ; les lieux et les lignes viendront s'y
+// ajouter en même temps que leurs fournisseurs.
+const RESULT_ICON = {
+  stop: 'fa-location-dot',
+  place: 'fa-city',
+  route: 'fa-route',
+};
+
+const RECENT_SEARCHES = [
+  { name: 'Metz Centre', sub: 'Recherché hier',      icon: 'fa-clock-rotate-left' },
+  { name: 'Strasbourg',  sub: '10/04/2024 · voyage', icon: 'fa-clock-rotate-left' },
+  { name: 'Paris CDG',   sub: '02/06/2024 · voyage', icon: 'fa-clock-rotate-left' },
+];
 
 /* ──────────────────────────────────────────────────────────────────────────
    Step 1 — Destination search (autocomplete + saved places + recents)
    ────────────────────────────────────────────────────────────────────────── */
-function DestinationStep({ query, onChange, onSelect, onSelectSaved }) {
-  const showAuto = query.length > 0;
-  const filtered = autocompleteResults.filter(r =>
-    r.name.toLowerCase().includes(query.toLowerCase()),
+function ResultRow({ result, onOpen, onPlanTo }) {
+  return (
+    <div className="flex items-center">
+      <div className="flex-1 min-w-0">
+        <AutocompleteItem
+          name={result.label}
+          sub={result.sublabel}
+          icon={RESULT_ICON[result.type]}
+          onClick={() => onOpen(result)}
+        />
+      </div>
+
+      {/* Le tap ouvre la fiche : partir en itinéraire doit rester un geste
+          distinct, jamais une surprise. Réservé aux résultats géolocalisés,
+          seuls points de trajet exploitables par computeRoute. */}
+      {result.coordinates && (
+        <button
+          onClick={() => onPlanTo(result)}
+          aria-label={`Itinéraire vers ${result.label}`}
+          className="pressable mr-3 w-9 h-9 rounded-xl bg-teal-soft text-teal-hover flex items-center justify-center shrink-0"
+        >
+          <i className="fa-solid fa-diamond-turn-right text-[13px]" />
+        </button>
+      )}
+    </div>
   );
+}
+
+function DestinationStep({ query, onChange, onOpenResult, onPlanTo, onSelect, onSelectSaved }) {
+  const { sections, loading, error } = useGeneralSearch(query);
+
+  // En dessous du seuil aucune requête ne part : plutôt qu'un écran vide, on
+  // laisse les raccourcis de l'utilisateur à l'affichage.
+  const searching = isSearchableQuery(query);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -27,18 +73,16 @@ function DestinationStep({ query, onChange, onSelect, onSelectSaved }) {
           <i className="fa-solid fa-magnifying-glass text-soft" />
           <input
             autoFocus
+            type="search"
             value={query}
             onChange={e => onChange(e.target.value)}
-            placeholder="Un pays, une destination..."
+            placeholder="Rechercher un arrêt, un lieu..."
             className="flex-1 bg-transparent border-none outline-none text-[14.5px] font-medium text-ink min-w-0 placeholder:text-soft"
           />
-          <button className="w-10 h-10 rounded-xl bg-ink text-white flex items-center justify-center" aria-label="Map">
-            <i className="fa-solid fa-map-location-dot text-sm" />
-          </button>
         </div>
       </div>
 
-      {!showAuto ? (
+      {!searching ? (
         <>
           <p className="px-5 pb-2 h-section">Lieux enregistrés</p>
           <div className="px-4 pb-3 flex flex-wrap gap-2">
@@ -56,11 +100,7 @@ function DestinationStep({ query, onChange, onSelect, onSelectSaved }) {
 
           <p className="px-5 pt-3 pb-2 h-section">Récents</p>
           <div className="flex-1 overflow-y-auto pb-6">
-            {[
-              { name: 'Metz Centre', sub: 'Recherché hier',           icon: 'fa-clock-rotate-left' },
-              { name: 'Strasbourg',  sub: '10/04/2024 · voyage',      icon: 'fa-clock-rotate-left' },
-              { name: 'Paris CDG',   sub: '02/06/2024 · voyage',      icon: 'fa-clock-rotate-left' },
-            ].map((r, i) => (
+            {RECENT_SEARCHES.map((r, i) => (
               <AutocompleteItem
                 key={i}
                 name={r.name}
@@ -73,15 +113,35 @@ function DestinationStep({ query, onChange, onSelect, onSelectSaved }) {
         </>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          <p className="px-5 pt-2 pb-1 h-section">Villes, gares & stations</p>
-          {filtered.map(r => (
-            <AutocompleteItem key={r.id} {...r} onClick={() => onSelect(r)} />
-          ))}
-          {filtered.length === 0 && (
+          {error && (
             <p className="px-5 py-8 text-center text-[13px] text-muted">
-              Aucun résultat pour « {query} »
+              Recherche indisponible : {error}
             </p>
           )}
+
+          {!error && loading && (
+            <p className="px-5 py-8 text-center text-[13px] text-muted">Recherche en cours...</p>
+          )}
+
+          {!error && !loading && sections.length === 0 && (
+            <p className="px-5 py-8 text-center text-[13px] text-muted">
+              Aucun résultat pour "{query}"
+            </p>
+          )}
+
+          {!error && !loading && sections.map(section => (
+            <div key={section.type}>
+              <p className="px-5 pt-2 pb-1 h-section">{section.title}</p>
+              {section.results.map(result => (
+                <ResultRow
+                  key={`${result.type}:${result.id}`}
+                  result={result}
+                  onOpen={onOpenResult}
+                  onPlanTo={onPlanTo}
+                />
+              ))}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -566,6 +626,33 @@ export default function SearchPage() {
     setQuery('');
   };
 
+  // Le type du résultat décide de la suite : un arrêt ouvre sa fiche, un lieu
+  // entre dans le tunnel d'itinéraire, une ligne ouvrira la sienne.
+  const handleOpenResult = result => {
+    const target = resolveResultTarget(result);
+    if (!target) return;
+
+    if (target.kind === 'navigate') {
+      navigate(target.to);
+    } else {
+      planTo(target.destination.label);
+    }
+  };
+
+  // Action secondaire : n'importe quel résultat géolocalisé peut servir de
+  // destination, sans passer par sa fiche.
+  const handlePlanTo = result => planTo(result.label);
+
+  const planTo = label => {
+    setStops(prev => {
+      const arr = [...prev];
+      arr[arr.length - 1] = { ...arr[arr.length - 1], value: label };
+      return arr;
+    });
+    setStep('route');
+    setQuery('');
+  };
+
   const handleSelectSaved = p => {
     setStops(prev => {
       const arr = [...prev];
@@ -602,6 +689,8 @@ export default function SearchPage() {
           <DestinationStep
             query={query}
             onChange={setQuery}
+            onOpenResult={handleOpenResult}
+            onPlanTo={handlePlanTo}
             onSelect={handleSelect}
             onSelectSaved={handleSelectSaved}
           />

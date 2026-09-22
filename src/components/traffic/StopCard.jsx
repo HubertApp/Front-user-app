@@ -1,13 +1,5 @@
 import { MODE_META } from '../ui/TransportIcon';
-
-// route_type GTFS → mode connu de MODE_META. Au-delà de 3 (ferry, funiculaire,
-// téléphérique…) on retombe sur l'icône bus faute de pictogramme dédié.
-const GTFS_TYPE_TO_MODE = {
-  0: 'tram',
-  1: 'tram',
-  2: 'train',
-  3: 'bus',
-};
+import RouteBadge, { modeForRouteType } from './RouteBadge';
 
 function formatDistance(meters) {
   if (meters == null) return null;
@@ -16,11 +8,14 @@ function formatDistance(meters) {
     : `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
 }
 
-export default function StopCard({ name, distanceMeters, routes = [], onClick }) {
+export default function StopCard({ name, distanceMeters, network, routes = [], onClick }) {
   const primaryType = routes.find(r => r.type != null)?.type;
-  const mode = GTFS_TYPE_TO_MODE[primaryType] ?? 'bus';
-  const { icon, label } = MODE_META[mode];
+  const { icon, label } = MODE_META[modeForRouteType(primaryType)];
   const distance = formatDistance(distanceMeters);
+
+  // Un arrêt trouvé par recherche n'a pas de distance : la recherche porte sur
+  // tous les réseaux, et c'est alors la ville qui distingue deux homonymes.
+  const context = distance ? `à ${distance}` : network?.cityOrRegion;
 
   return (
     <button
@@ -33,7 +28,7 @@ export default function StopCard({ name, distanceMeters, routes = [], onClick })
         </span>
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-[11px] text-soft font-mono uppercase">
-            {label}{distance ? ` · à ${distance}` : ''}
+            {label}{context ? ` · ${context}` : ''}
           </span>
           <span className="text-sm font-bold text-ink tracking-tight truncate">{name}</span>
         </div>
@@ -42,14 +37,7 @@ export default function StopCard({ name, distanceMeters, routes = [], onClick })
       {routes.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-dashed border-line">
           {routes.map(route => (
-            <span
-              key={route.id}
-              className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-lg bg-teal-soft text-teal-hover"
-              style={route.color ? { backgroundColor: `#${route.color}`, color: `#${route.textColor || 'FFFFFF'}` } : undefined}
-              title={route.longName || undefined}
-            >
-              {route.shortName || route.longName || route.id}
-            </span>
+            <RouteBadge key={route.id} route={route} />
           ))}
         </div>
       )}
