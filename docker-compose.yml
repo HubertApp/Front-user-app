@@ -1,0 +1,35 @@
+services:
+  # --- Développement : hot reload -------------------------------------------
+  # Bind mount du code source + volume anonyme sur node_modules pour que les
+  # binaires Linux installés dans l'image (RUN npm ci) ne soient pas écrasés
+  # par un éventuel node_modules compilé sur l'hôte (Windows/Mac).
+  front-dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+
+  # --- Production : build Vite + nginx --------------------------------------
+  # Les VITE_* sont inlinées au build (ARG), pas au runtime : elles viennent
+  # ici du .env du dossier (docker compose le charge automatiquement pour
+  # l'interpolation ${...}), donc pas besoin de les dupliquer.
+  front-prod:
+    build:
+      context: .
+      target: prod
+      args:
+        VITE_AOM_API_URL: ${VITE_AOM_API_URL:-http://localhost:4000/}
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    ports:
+      - "8080:80"
+    profiles:
+      - prod
