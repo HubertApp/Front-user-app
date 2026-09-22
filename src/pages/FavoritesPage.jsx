@@ -18,6 +18,7 @@ export default function FavoritesPage() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [panelH, setPanelH] = useState(OPEN_H);
   const [isDragging, setIsDragging] = useState(false);
+  const mapRef = useRef(null);
   const { dark, collapsed } = useTheme();
   const panelBg = dark ? 'rgba(14, 26, 36, 0.92)' : 'rgba(246,247,244,0.86)';
   usePageMeta({ title: 'Favoris', description: 'Accédez rapidement à vos trajets favoris et itinéraires enregistrés.', path: '/favoris' });
@@ -86,7 +87,7 @@ export default function FavoritesPage() {
 
   return (
     <div className={`relative h-screen overflow-hidden bg-warm-bg ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
-      <MapView className="absolute inset-0 z-0" withRoute withPin />
+      <MapView ref={mapRef} className="absolute inset-0 z-0" withRoute withPin />
 
       {/* Top pills */}
       <div className="absolute top-14 left-4 right-4 z-10 flex gap-2 sidebar-left-p md:right-6 md:top-6">
@@ -111,13 +112,19 @@ export default function FavoritesPage() {
 
       {/* Map controls stacked */}
       <div className="absolute right-4 top-32 z-10 flex flex-col gap-2 md:right-6">
-        {['fa-location-crosshairs', 'fa-plus', 'fa-minus'].map((ic, i) => (
+        {[
+          { ic: 'fa-location-crosshairs', label: 'Ma position', action: () => mapRef.current?.locate() },
+          { ic: 'fa-plus', label: 'Zoomer', action: () => mapRef.current?.zoomIn() },
+          { ic: 'fa-minus', label: 'Dézoomer', action: () => mapRef.current?.zoomOut() },
+        ].map((c, i) => (
           <button
             key={i}
+            onClick={c.action}
+            aria-label={c.label}
             className="pressable w-10 h-10 rounded-xl bg-white border border-line flex items-center justify-center"
             style={{ boxShadow: '0 4px 12px -4px rgba(15,26,36,0.18)' }}
           >
-            <i className={`fa-solid ${ic} text-sm`} />
+            <i className={`fa-solid ${c.ic} text-sm`} />
           </button>
         ))}
       </div>
@@ -175,7 +182,7 @@ export default function FavoritesPage() {
             <div
               ref={scrollRef}
               onScroll={onScroll}
-              className="flex justify-center gap-3 overflow-x-auto px-5 pb-2 pt-1 snap-x snap-mandatory md:justify-start"
+              className="flex justify-start gap-3 overflow-x-auto px-5 pb-2 pt-1 snap-x snap-mandatory"
             >
               {favoriteRoutes.map(r => (
                 <FavoriteCard key={r.id} {...r} />
