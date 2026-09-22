@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
 import AlertCard from '../components/traffic/AlertCard';
@@ -8,6 +9,8 @@ import { trafficAlerts } from '../data/mock';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useNearbyStops } from '../hooks/useNearbyStops';
+import { useStopSearch } from '../hooks/useStopSearch';
+import { isSearchableQuery } from '../utils/searchQuery';
 
 // Metz : le jeu de données GTFS de référence est lorrain.
 const METZ_CENTER = [6.1757, 49.1193];
@@ -23,7 +26,9 @@ export default function TrafficPage() {
   const [center, setCenter] = useState(METZ_CENTER);
   const [locating, setLocating] = useState(false);
   const [located, setLocated] = useState(false);
+  const [query, setQuery] = useState('');
   const { collapsed } = useTheme();
+  const navigate = useNavigate();
   usePageMeta({ title: 'Infos trafic', description: 'Consultez les perturbations en temps réel sur vos trajets et autour de votre position.', path: '/trafic' });
 
   const { stops, loading, error, refetch } = useNearbyStops({
@@ -36,8 +41,20 @@ export default function TrafficPage() {
     first: 50,
   });
 
+  const { results, loading: searchLoading, error: searchError, refetch: refetchSearch } =
+    useStopSearch(query);
+
+  // Une saisie trop courte n'interroge pas le back : tant qu'elle n'atteint pas
+  // le seuil, la page reste sur les arrêts autour de la position.
+  const searching = isSearchableQuery(query);
+  const shownStops = searching ? results : stops;
+  const shownLoading = searching ? searchLoading : loading;
+  const shownError = searching ? searchError : error;
+  // « Réessayer » doit relancer ce qui a échoué, pas l'autre source.
+  const retry = searching ? refetchSearch : refetch;
+
   const markers = useMemo(
-    () => stops
+    () => shownStops
       .filter(stop => stop.location)
       .map(stop => ({
         id: stop.id,
@@ -45,7 +62,7 @@ export default function TrafficPage() {
         latitude: stop.location.latitude,
         label: stop.name,
       })),
-    [stops],
+    [shownStops],
   );
 
   const cycleRadius = () =>
@@ -144,44 +161,61 @@ export default function TrafficPage() {
               <MapView withRoute={false} withPin center={center} zoom={15} markers={markers} />
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl mb-3">
-              <button
-                onClick={locate}
-                disabled={locating}
-                aria-label="Utiliser ma position"
-                className="pressable w-10 h-10 rounded-xl bg-teal-soft text-teal-hover inline-flex items-center justify-center text-base shrink-0"
-              >
-                <i className={`fa-solid ${locating ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'}`} />
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13.5px] font-bold text-ink">
-                  {located ? 'Autour de moi' : 'Centre-ville de Metz'}
-                </p>
-                <p className="text-[11.5px] text-muted mt-0.5">
-                  Rayon d'analyse : {formatRadius(radius)}
-                </p>
-              </div>
-              <button
-                onClick={cycleRadius}
-                aria-label="Changer le rayon"
-                className="pressable w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center text-[12px]"
-              >
-                <i className="fa-solid fa-sliders" />
-              </button>
+            <div className="flex items-center gap-3 h-12 px-3.5 bg-white border border-line rounded-2xl mb-3">
+              <i className="fa-solid fa-magnifying-glass text-soft text-[13px]" />
+              <input
+                type="search"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                aria-label="Rechercher un arrêt"
+                placeholder="Rechercher un arrêt…"
+                className="flex-1 bg-transparent border-none outline-none text-[13.5px] font-medium text-ink min-w-0 placeholder:text-soft"
+              />
             </div>
 
+            {/* Le réglage du rayon ne veut plus rien dire dès qu'on cherche par
+                nom : la recherche porte sur tous les réseaux, sans notion de
+                distance. */}
+            {!searching && (
+              <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl mb-3">
+                <button
+                  onClick={locate}
+                  disabled={locating}
+                  aria-label="Utiliser ma position"
+                  className="pressable w-10 h-10 rounded-xl bg-teal-soft text-teal-hover inline-flex items-center justify-center text-base shrink-0"
+                >
+                  <i className={`fa-solid ${locating ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'}`} />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13.5px] font-bold text-ink">
+                    {located ? 'Autour de moi' : 'Centre-ville de Metz'}
+                  </p>
+                  <p className="text-[11.5px] text-muted mt-0.5">
+                    Rayon d'analyse : {formatRadius(radius)}
+                  </p>
+                </div>
+                <button
+                  onClick={cycleRadius}
+                  aria-label="Changer le rayon"
+                  className="pressable w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center text-[12px]"
+                >
+                  <i className="fa-solid fa-sliders" />
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2.5">
-              {error && (
+              {shownError && (
                 <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl">
                   <span className="w-9 h-9 rounded-xl bg-danger-soft text-danger inline-flex items-center justify-center text-[13px] shrink-0">
                     <i className="fa-solid fa-triangle-exclamation" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-semibold text-ink">Arrêts indisponibles</p>
-                    <p className="text-[11px] text-muted mt-0.5">{error}</p>
+                    <p className="text-[11px] text-muted mt-0.5">{shownError}</p>
                   </div>
                   <button
-                    onClick={refetch}
+                    onClick={retry}
                     className="text-[12px] font-semibold text-teal-hover hover:underline shrink-0"
                   >
                     Réessayer
@@ -189,18 +223,24 @@ export default function TrafficPage() {
                 </div>
               )}
 
-              {!error && loading && (
+              {!shownError && shownLoading && (
                 <p className="text-[12.5px] text-muted px-1 py-2">Recherche des arrêts…</p>
               )}
 
-              {!error && !loading && stops.length === 0 && (
+              {!shownError && !shownLoading && shownStops.length === 0 && (
                 <p className="text-[12.5px] text-muted px-1 py-2">
-                  Aucun arrêt dans un rayon de {formatRadius(radius)}.
+                  {searching
+                    ? `Aucun arrêt ne correspond à "${query}".`
+                    : `Aucun arrêt dans un rayon de ${formatRadius(radius)}.`}
                 </p>
               )}
 
-              {!error && !loading && stops.map(stop => (
-                <StopCard key={stop.id} {...stop} />
+              {!shownError && !shownLoading && shownStops.map(stop => (
+                <StopCard
+                  key={stop.id}
+                  {...stop}
+                  onClick={() => navigate(`/arret/${stop.id}`)}
+                />
               ))}
             </div>
           </>

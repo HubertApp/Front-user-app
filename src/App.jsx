@@ -9,6 +9,7 @@ const TrafficPage   = lazy(() => import('./pages/TrafficPage'));
 const TravelsPage   = lazy(() => import('./pages/TravelsPage'));
 const AccountPage   = lazy(() => import('./pages/AccountPage'));
 const SearchPage    = lazy(() => import('./pages/SearchPage'));
+const StopPage      = lazy(() => import('./pages/StopPage'));
 const AuthPages    = lazy(() => import('./pages/AuthPages'));
 const LegalNoticePage = lazy(() => import('./pages/LegalNoticePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/login"    element={<AuthPages />} />
             <Route path="/compte"    element={<AccountPage />} />
             <Route path="/recherche" element={<SearchPage />} />
+            <Route path="/arret/:id" element={<StopPage />} />
             <Route path="/mentions-legales" element={<LegalNoticePage />} />
             <Route path="/a-propos" element={<AboutPage />} />
             <Route path="/parametres-avances" element={<AdvancedSettingsPage />} />
