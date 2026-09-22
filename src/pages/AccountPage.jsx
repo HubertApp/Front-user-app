@@ -110,8 +110,10 @@ export default function AccountPage() {
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
           <SettingRow icon="fa-shield-halved" label="Gestion des consentements" sub="Cookies, données partagées"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => {}} />
-          <SettingRow icon="fa-sliders" label="Paramètres avancés" sub="Modes préférés, suppression de compte"
+            <SettingRow icon="fa-sliders" label="Paramètres avancés" sub="Modes préférés, suppression de compte"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/parametres-avances')} />
+          <SettingRow icon="fa-circle-question" label="F.A.Q" sub="Le mode d'emploi de l'application"
+            trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/faq')} />
             <SettingRow icon="fa-circle-info" label="À propos de Hubert" sub="Version 1.0.0 · © 2025"
             trailing={<i className="fa-solid fa-chevron-right text-soft text-[11px]" />} onClick={() => navigate('/a-propos')} />
         </SettingsSection>

@@ -12,17 +12,17 @@ import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 const quickActions = [
-  { key: 'favoris', title: 'Favoris',     icon: 'fa-heart',            tone: 'coral', to: '/favoris' },
-  { key: 'trafic',  title: 'Trafic',      icon: 'fa-tower-broadcast',  tone: 'amber', to: '/trafic'  },
-  { key: 'voyages', title: 'Voyages',     icon: 'fa-suitcase-rolling',                to: '/voyages' },
-  { key: 'compte',  title: 'Paramètres',  icon: 'fa-gear',             tone: 'lilac', to: '/compte'  },
+  { key: 'favoris', title: 'Favoris', icon: 'fa-heart', tone: 'coral', to: '/favoris' },
+  { key: 'trafic', title: 'Trafic', icon: 'fa-tower-broadcast', tone: 'amber', to: '/trafic' },
+  { key: 'voyages', title: 'Voyages', icon: 'fa-suitcase-rolling', to: '/voyages' },
+  { key: 'compte', title: 'Paramètres', icon: 'fa-gear', tone: 'lilac', to: '/compte' },
 ];
 
 const frequent = [
   {
     key: 'maison-travail',
     from: 'Maison',
-    to:   'Travail',
+    to: 'Travail',
     modes: ['walk', 'tram', 'walk'],
     meta: 'Part dans 12 min · 24 min de trajet',
     when: 'En 12 min',
@@ -30,7 +30,7 @@ const frequent = [
   {
     key: 'plan',
     from: 'Maison',
-    to:   'Suède',
+    to: 'Suède',
     modes: ['plane'],
     meta: 'Part dans 3h · 2h de vol',
     when: 'en 3H',
@@ -96,7 +96,12 @@ export default function HomePage() {
         <section className="mt-7">
           <div className="flex items-center justify-between mb-3">
             <span className="h-section">En route</span>
-            <span className="text-[11px] text-soft font-mono">04</span>
+            <button
+              className="text-[11px] font-semibold text-teal-hover hover:underline"
+            >
+              <a href="/faq">F.A.Q</a>
+
+            </button>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {quickActions.map(qa => (
