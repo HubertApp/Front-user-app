@@ -108,15 +108,6 @@ export const myTravels = [
   },
 ];
 
-export const autocompleteResults = [
-  { id: 1, name: 'Metz Ville',   region: 'Grand Est', type: 'station'  },
-  { id: 2, name: 'Metz Centre',  region: 'Grand Est', type: 'station'  },
-  { id: 3, name: 'Metz Nord',    region: 'Grand Est', type: 'station'  },
-  { id: 4, name: 'Metz Sablon',  region: 'Grand Est', type: 'station'  },
-  { id: 5, name: 'Metz-Borny',   region: 'Grand Est', type: 'city'     },
-  { id: 6, name: 'Metz-Queuleu', region: 'Grand Est', type: 'district' },
-];
-
 export const itinerarySteps = [
   { mode: 'walk', address: '8 rue des Potiers', city: 'Metz — Grand Est',    duration: '10 min', when: '07:00' },
   { mode: 'bus',  address: 'Arrêt République',  city: 'Bus n°1 vers Centre', duration: '08 min', when: '07:12' },
