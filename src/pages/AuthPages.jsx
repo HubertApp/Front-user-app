@@ -4,7 +4,7 @@ import { useMutation } from '@apollo/client/react';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
-import { setToken, getToken } from './tokenStore';
+import { setToken } from './tokenStore';
 import { useCurrentUser, useLogout } from '../services/userService';
 import UserAvatar from '../components/user/UserAvatar';
 
@@ -78,9 +78,7 @@ export default function AuthPages({ onSuccess, redirectTo = '/' }) {
     setErrorMessage(null);
     try {
       const { data: result } = await loginWithGoogle({ variables: { idToken } });
-      console.log(idToken);
       await setToken(result.loginWithGoogle.accessToken);
-      console.log('Token relu depuis le storage juste après écriture :', await getToken());
 
       let meResult;
       try {
@@ -89,7 +87,6 @@ export default function AuthPages({ onSuccess, redirectTo = '/' }) {
         console.error('refetch(getMe) a levé une exception :', refetchErr);
         throw refetchErr;
       }
-      console.log('Résultat brut complet de refetch(getMe) :', JSON.stringify(meResult, null, 2));
 
       if (!meResult?.data?.getMe) {
         // Le token a été délivré mais getMe échoue derrière (headers
