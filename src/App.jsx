@@ -17,6 +17,7 @@ const AdvancedSettingsPage = lazy(() => import('./pages/AdvancedSettingsPage'));
 const NotificationsSettingsPage = lazy(() => import('./pages/NotificationsSettingsPage'));
 const BecomePartnerPage = lazy(() => import('./pages/BecomePartnerPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
+const DesabonnementPage = lazy(() => import('./pages/DesabonnementPage'));
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/notifications" element={<NotificationsSettingsPage />} />
             <Route path="/devenir-partenaire" element={<BecomePartnerPage />} />
             <Route path="/faq" element={<FAQPage />} />
+            <Route path="/desabonnement" element={<DesabonnementPage />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
