@@ -27,7 +27,7 @@ export default function AlertCard({ severity = 'medium', type, title, descriptio
           <span className="text-sm font-bold text-ink tracking-tight truncate">{title}</span>
         </div>
       </div>
-      <p className="text-[13px] text-muted leading-snug">{description}</p>
+      {description && <p className="text-[13px] text-muted leading-snug">{description}</p>}
       <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-dashed border-line">
         {delay && (
           <span className={`font-mono text-xs font-bold px-2.5 py-1 rounded-lg ${cls.pill}`}>

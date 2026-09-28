@@ -1,6 +1,7 @@
 import { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { getCurrentPosition } from '../../services/geolocation';
 
 const DEFAULT_CENTER = [6.1727, 49.1193];
 const DEFAULT_STYLE = 'mapbox://styles/mapbox/streets-v12';
@@ -224,18 +225,13 @@ const MapView = forwardRef(function MapView({
   useImperativeHandle(ref, () => ({
     zoomIn: () => map?.zoomIn(),
     zoomOut: () => map?.zoomOut(),
+    // Même service que le reste de l'app : invite native sur Android/iOS
+    // (Capacitor), invite du navigateur sur le web.
     locate: (onError) => {
       if (!map) return;
-      if (!navigator.geolocation) { onError?.('unsupported'); return; }
-      navigator.geolocation.getCurrentPosition(
-        pos => map.flyTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
-          zoom: 15,
-          essential: true,
-        }),
-        () => onError?.('denied'),
-        { enableHighAccuracy: true, timeout: 8000 },
-      );
+      getCurrentPosition()
+        .then(pos => map.flyTo({ center: [pos.lon, pos.lat], zoom: 15, essential: true }))
+        .catch(err => onError?.(err?.code ?? 'unavailable'));
     },
   }), [map]);
 
