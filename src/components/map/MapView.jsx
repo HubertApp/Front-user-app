@@ -9,6 +9,9 @@ const DEFAULT_STYLE = 'mapbox://styles/mapbox/streets-v12';
 // pages qui n'en passent pas.
 const EMPTY_MARKERS = [];
 
+const ROUTE_SOURCE = 'itinerary';
+const EMPTY_FC = { type: 'FeatureCollection', features: [] };
+
 const MapPlaceholder = memo(function MapPlaceholder({ withRoute = true, withPin = true }) {
   return (
     <div className="absolute inset-0 overflow-hidden map-placeholder">
@@ -106,6 +109,7 @@ const MapView = forwardRef(function MapView({
   withRoute = true,
   withPin = true,
   markers = EMPTY_MARKERS,
+  route = null, // FeatureCollection renvoyée par getItineraireFromTo
   onReady,
 }, ref) {
   const containerRef = useRef(null);
@@ -216,6 +220,77 @@ const MapView = forwardRef(function MapView({
       markersRef.current = [];
     };
   }, [map, markers]);
+
+  // Tracé de l'itinéraire : une source GeoJSON, trois couches filtrées sur
+  // properties.kind. addSource/addLayer exigent un style chargé — or `map`
+  // est posé à la construction, avant l'événement `load` (voir plus haut).
+  useEffect(() => {
+    if (!map) return undefined;
+
+    const draw = () => {
+      const data = route ?? EMPTY_FC;
+      const source = map.getSource(ROUTE_SOURCE);
+
+      if (source) {
+        // Mise à jour : les couches restent en place et suivent la source.
+        source.setData(data);
+      } else {
+        map.addSource(ROUTE_SOURCE, { type: 'geojson', data });
+
+        // Mapbox dessine dans l'ordre d'ajout : le trait, les étapes, puis
+        // le départ et l'arrivée par-dessus.
+        map.addLayer({
+          id: 'itinerary-line',
+          type: 'line',
+          source: ROUTE_SOURCE,
+          filter: ['==', ['get', 'kind'], 'route'],
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 'line-color': '#2563eb', 'line-width': 5 },
+        });
+
+        map.addLayer({
+          id: 'itinerary-steps',
+          type: 'circle',
+          source: ROUTE_SOURCE,
+          filter: ['==', ['get', 'kind'], 'step'],
+          paint: {
+            'circle-radius': 4,
+            'circle-color': '#ffffff',
+            'circle-stroke-color': '#2563eb',
+            'circle-stroke-width': 2,
+          },
+        });
+
+        map.addLayer({
+          id: 'itinerary-ends',
+          type: 'circle',
+          source: ROUTE_SOURCE,
+          filter: ['in', ['get', 'kind'], ['literal', ['start', 'end']]],
+          paint: {
+            'circle-radius': 7,
+            'circle-color': ['match', ['get', 'kind'], 'start', '#16a34a', '#dc2626'],
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 2,
+          },
+        });
+      }
+
+      // Cadrage sur le trajet entier, grâce à la bbox calculée côté back.
+      if (route?.bbox) {
+        const [minLon, minLat, maxLon, maxLat] = route.bbox;
+        map.fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding: 60, duration: 800 });
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      draw();
+      return undefined;
+    }
+    // `load` ne part qu'une fois : s'il est déjà passé, on attendrait
+    // indéfiniment. `idle` se déclenche chaque fois que la carte a fini de rendre.
+    map.once('idle', draw);
+    return () => map.off('idle', draw);
+  }, [map, route]);
 
   // Expose des commandes de haut niveau (zoom, géolocalisation) plutôt que
   // l'instance mapboxgl brute : les pages appelantes n'ont pas à connaître

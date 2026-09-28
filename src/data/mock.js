@@ -116,7 +116,7 @@ export const itinerarySteps = [
 ];
 
 export const savedPlaces = [
-  { id: 1, label: 'Maison',  icon: 'fa-house',     address: '12 rue des potiers, Metz' },
-  { id: 2, label: 'Travail', icon: 'fa-briefcase', address: '5 Place de la République, Metz' },
+  { id: 1, label: 'Maison',  icon: 'fa-house',     address: '12 rue des potiers, Metz',       lat: 49.12,   lon: 6.17 },
+  { id: 2, label: 'Travail', icon: 'fa-briefcase', address: '5 Place de la République, Metz', lat: 49.1146, lon: 6.1747 },
   { id: 3, label: 'Gym',     icon: 'fa-dumbbell',  address: 'KineBowl, Metz' },
 ];
