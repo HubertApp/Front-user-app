@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/layout/PageHeader';
 import BottomNav from '../components/layout/BottomNav';
 import AlertCard from '../components/traffic/AlertCard';
@@ -9,12 +8,16 @@ import { trafficAlerts } from '../data/mock';
 import { useTheme } from '../context/ThemeContext';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useNearbyStops } from '../hooks/useNearbyStops';
-import { useStopSearch } from '../hooks/useStopSearch';
-import { isSearchableQuery } from '../utils/searchQuery';
+import { useDisruptions, toAlertCard } from '../hooks/useDisruptions';
+import { useUserPosition } from '../hooks/useUserPosition';
+import { geolocationErrorMessage } from '../services/geolocation';
 
 // Metz : le jeu de données GTFS de référence est lorrain.
-const METZ_CENTER = [6.1757, 49.1193];
+const METZ = { lat: 49.1193, lon: 6.1757 };
 const RADIUS_STEPS = [300, 500, 1000];
+// Rayon des prévisions de circulation : indépendant de celui des arrêts, le
+// service le ramène de toute façon à 1200 m minimum (taille d'une tuile).
+const TRAFFIC_RADIUS_M = 3000;
 
 function formatRadius(meters) {
   return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
@@ -23,17 +26,30 @@ function formatRadius(meters) {
 export default function TrafficPage() {
   const [tab, setTab] = useState('trajets');
   const [radius, setRadius] = useState(500);
-  const [center, setCenter] = useState(METZ_CENTER);
-  const [locating, setLocating] = useState(false);
-  const [located, setLocated] = useState(false);
-  const [query, setQuery] = useState('');
+  // Position demandée à l'ouverture de l'onglet "Ma position" (web : invite
+  // du navigateur, mobile : invite native via Capacitor). Refus ou échec :
+  // on reste sur Metz, et le bouton de localisation permet de réessayer.
+  const { position, status: positionStatus, error: positionError, locate } =
+    useUserPosition({ fallback: METZ, auto: false });
+  const located = positionStatus === 'located';
+  const locating = positionStatus === 'locating';
+  // Pas de requête tant que la position n'est pas connue (ou refusée) : sinon
+  // on chargerait Metz puis la vraie position.
+  const positionReady = positionStatus === 'located' || positionStatus === 'fallback';
+  // Même référence tant que la position ne change pas : la carte ne se
+  // recentre pas à chaque rendu.
+  const mapCenter = useMemo(() => [position.lon, position.lat], [position]);
+
+  useEffect(() => {
+    if (tab === 'position' && positionStatus === 'idle') locate();
+  }, [tab, positionStatus, locate]);
   const { collapsed } = useTheme();
-  const navigate = useNavigate();
   usePageMeta({ title: 'Infos trafic', description: 'Consultez les perturbations en temps réel sur vos trajets et autour de votre position.', path: '/trafic' });
 
   const { stops, loading, error, refetch } = useNearbyStops({
-    lat: center[1],
-    lon: center[0],
+    lat: position.lat,
+    lon: position.lon,
+    enabled: positionReady,
     radiusMeters: radius,
     // En hypercentre il y a déjà ~21 arrêts à 300 m : sous ce plafond, tous les
     // rayons renverraient le même nombre de résultats et le réglage semblerait
@@ -41,20 +57,28 @@ export default function TrafficPage() {
     first: 50,
   });
 
-  const { results, loading: searchLoading, error: searchError, refetch: refetchSearch } =
-    useStopSearch(query);
+  const {
+    disruptions,
+    loading: trafficLoading,
+    error: trafficError,
+    refetch: refetchTraffic,
+    covered: trafficCovered,
+  } = useDisruptions({
+    lat: position.lat,
+    lon: position.lon,
+    radiusM: TRAFFIC_RADIUS_M,
+    enabled: positionReady,
+  });
 
-  // Une saisie trop courte n'interroge pas le back : tant qu'elle n'atteint pas
-  // le seuil, la page reste sur les arrêts autour de la position.
-  const searching = isSearchableQuery(query);
-  const shownStops = searching ? results : stops;
-  const shownLoading = searching ? searchLoading : loading;
-  const shownError = searching ? searchError : error;
-  // « Réessayer » doit relancer ce qui a échoué, pas l'autre source.
-  const retry = searching ? refetchSearch : refetch;
+  const trafficAlertsNearby = useMemo(() => disruptions.map(toAlertCard), [disruptions]);
+
+  const refreshAll = () => {
+    refetch();
+    refetchTraffic();
+  };
 
   const markers = useMemo(
-    () => shownStops
+    () => stops
       .filter(stop => stop.location)
       .map(stop => ({
         id: stop.id,
@@ -62,32 +86,11 @@ export default function TrafficPage() {
         latitude: stop.location.latitude,
         label: stop.name,
       })),
-    [shownStops],
+    [stops],
   );
 
   const cycleRadius = () =>
     setRadius(current => RADIUS_STEPS[(RADIUS_STEPS.indexOf(current) + 1) % RADIUS_STEPS.length]);
-
-  const locate = () => {
-    if (!navigator.geolocation) return;
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        setCenter([position.coords.longitude, position.coords.latitude]);
-        setLocated(true);
-        setLocating(false);
-      },
-      // Hors de la zone couverte par le GTFS chargé, la vraie position ne
-      // renverrait aucun arrêt : on retombe sur Metz plutôt que d'afficher
-      // une liste vide qui donnerait l'impression d'un bug.
-      () => {
-        setCenter(METZ_CENTER);
-        setLocated(false);
-        setLocating(false);
-      },
-      { timeout: 8000 },
-    );
-  };
 
   return (
     <div className={`min-h-screen bg-warm-bg text-ink pb-28 md:pb-12 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
@@ -97,7 +100,7 @@ export default function TrafficPage() {
           title="Infos trafic"
           action={
             <button
-              onClick={refetch}
+              onClick={refreshAll}
               className="pressable w-10 h-10 rounded-full bg-white border border-line flex items-center justify-center"
               aria-label="Recharger"
             >
@@ -158,64 +161,102 @@ export default function TrafficPage() {
         ) : (
           <>
             <div className="relative h-56 rounded-2xl overflow-hidden border border-line mb-3">
-              <MapView withRoute={false} withPin center={center} zoom={15} markers={markers} />
+              <MapView withRoute={false} withPin center={mapCenter} zoom={15} markers={markers} />
             </div>
 
-            <div className="flex items-center gap-3 h-12 px-3.5 bg-white border border-line rounded-2xl mb-3">
-              <i className="fa-solid fa-magnifying-glass text-soft text-[13px]" />
-              <input
-                type="search"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                aria-label="Rechercher un arrêt"
-                placeholder="Rechercher un arrêt…"
-                className="flex-1 bg-transparent border-none outline-none text-[13.5px] font-medium text-ink min-w-0 placeholder:text-soft"
-              />
-            </div>
-
-            {/* Le réglage du rayon ne veut plus rien dire dès qu'on cherche par
-                nom : la recherche porte sur tous les réseaux, sans notion de
-                distance. */}
-            {!searching && (
-              <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl mb-3">
-                <button
-                  onClick={locate}
-                  disabled={locating}
-                  aria-label="Utiliser ma position"
-                  className="pressable w-10 h-10 rounded-xl bg-teal-soft text-teal-hover inline-flex items-center justify-center text-base shrink-0"
-                >
-                  <i className={`fa-solid ${locating ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'}`} />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13.5px] font-bold text-ink">
-                    {located ? 'Autour de moi' : 'Centre-ville de Metz'}
-                  </p>
-                  <p className="text-[11.5px] text-muted mt-0.5">
-                    Rayon d'analyse : {formatRadius(radius)}
-                  </p>
-                </div>
-                <button
-                  onClick={cycleRadius}
-                  aria-label="Changer le rayon"
-                  className="pressable w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center text-[12px]"
-                >
-                  <i className="fa-solid fa-sliders" />
-                </button>
+            <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl mb-3">
+              <button
+                onClick={locate}
+                disabled={locating}
+                aria-label="Utiliser ma position"
+                className="pressable w-10 h-10 rounded-xl bg-teal-soft text-teal-hover inline-flex items-center justify-center text-base shrink-0"
+              >
+                <i className={`fa-solid ${locating ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'}`} />
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13.5px] font-bold text-ink">
+                  {located ? 'Autour de moi' : locating ? 'Localisation…' : 'Centre-ville de Metz'}
+                </p>
+                <p className="text-[11.5px] text-muted mt-0.5">
+                  {positionError && !located
+                    ? geolocationErrorMessage(positionError)
+                    : `Rayon d'analyse : ${formatRadius(radius)}`}
+                </p>
               </div>
-            )}
+              <button
+                onClick={cycleRadius}
+                aria-label="Changer le rayon"
+                className="pressable w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center text-[12px]"
+              >
+                <i className="fa-solid fa-sliders" />
+              </button>
+            </div>
+
+            <section aria-labelledby="traffic-nearby-title" className="mb-5">
+              <h2
+                id="traffic-nearby-title"
+                className="text-[11px] font-mono uppercase text-soft px-1 mb-2"
+              >
+                Circulation · {formatRadius(TRAFFIC_RADIUS_M)} autour
+              </h2>
+
+              <div className="flex flex-col gap-2.5">
+                {trafficError && (
+                  <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl">
+                    <span className="w-9 h-9 rounded-xl bg-danger-soft text-danger inline-flex items-center justify-center text-[13px] shrink-0">
+                      <i className="fa-solid fa-triangle-exclamation" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12.5px] font-semibold text-ink">Prévisions de circulation indisponibles</p>
+                      <p className="text-[11px] text-muted mt-0.5">{trafficError}</p>
+                    </div>
+                    <button
+                      onClick={refetchTraffic}
+                      className="text-[12px] font-semibold text-teal-hover hover:underline shrink-0"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
+                )}
+
+                {!trafficCovered && (
+                  <p className="text-[12.5px] text-muted px-1 py-2">
+                    Pas encore de prévision de circulation dans votre secteur.
+                  </p>
+                )}
+
+                {trafficCovered && !trafficError && trafficLoading && (
+                  <p className="text-[12.5px] text-muted px-1 py-2">Analyse de la circulation…</p>
+                )}
+
+                {trafficCovered && !trafficError && !trafficLoading && trafficAlertsNearby.length === 0 && (
+                  <p className="text-[12.5px] text-muted px-1 py-2">
+                    Circulation fluide autour de vous.
+                  </p>
+                )}
+
+                {trafficCovered && !trafficError && !trafficLoading && trafficAlertsNearby.map(alert => (
+                  <AlertCard key={alert.id} {...alert} />
+                ))}
+              </div>
+            </section>
+
+            <h2 className="text-[11px] font-mono uppercase text-soft px-1 mb-2">
+              Arrêts · {formatRadius(radius)} autour
+            </h2>
 
             <div className="flex flex-col gap-2.5">
-              {shownError && (
+              {error && (
                 <div className="flex items-center gap-3 p-3.5 bg-white border border-line rounded-2xl">
                   <span className="w-9 h-9 rounded-xl bg-danger-soft text-danger inline-flex items-center justify-center text-[13px] shrink-0">
                     <i className="fa-solid fa-triangle-exclamation" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-semibold text-ink">Arrêts indisponibles</p>
-                    <p className="text-[11px] text-muted mt-0.5">{shownError}</p>
+                    <p className="text-[11px] text-muted mt-0.5">{error}</p>
                   </div>
                   <button
-                    onClick={retry}
+                    onClick={refetch}
                     className="text-[12px] font-semibold text-teal-hover hover:underline shrink-0"
                   >
                     Réessayer
@@ -223,24 +264,18 @@ export default function TrafficPage() {
                 </div>
               )}
 
-              {!shownError && shownLoading && (
+              {!error && loading && (
                 <p className="text-[12.5px] text-muted px-1 py-2">Recherche des arrêts…</p>
               )}
 
-              {!shownError && !shownLoading && shownStops.length === 0 && (
+              {!error && !loading && stops.length === 0 && (
                 <p className="text-[12.5px] text-muted px-1 py-2">
-                  {searching
-                    ? `Aucun arrêt ne correspond à "${query}".`
-                    : `Aucun arrêt dans un rayon de ${formatRadius(radius)}.`}
+                  Aucun arrêt dans un rayon de {formatRadius(radius)}.
                 </p>
               )}
 
-              {!shownError && !shownLoading && shownStops.map(stop => (
-                <StopCard
-                  key={stop.id}
-                  {...stop}
-                  onClick={() => navigate(`/arret/${stop.id}`)}
-                />
+              {!error && !loading && stops.map(stop => (
+                <StopCard key={stop.id} {...stop} />
               ))}
             </div>
           </>
