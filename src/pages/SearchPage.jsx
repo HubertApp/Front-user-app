@@ -4,11 +4,12 @@ import MapView from '../components/map/MapView';
 import AutocompleteItem from '../components/search/AutocompleteItem';
 import ItineraryStep from '../components/itinerary/ItineraryStep';
 import EndpointDot from '../components/ui/EndpointDot';
-import { savedPlaces, itinerarySteps } from '../data/mock';
+import { savedPlaces } from '../data/mock';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { useGeneralSearch } from '../hooks/useGeneralSearch';
 import { isSearchableQuery } from '../utils/searchQuery';
 import { resolveResultTarget } from '../utils/searchResults';
+import { useItinerary } from '../services/itineraryService';
 
 
 // Pictogramme par type de résultat ; les lieux et les lignes viendront s'y
@@ -318,7 +319,7 @@ function RouteStep({ stops, setStops, onConfirm }) {
                 const arr = [...prev];
                 const idx = arr.findIndex(s => !s.value);
                 const target = idx === -1 ? arr.length - 1 : idx;
-                arr[target] = { ...arr[target], value: p.label };
+                arr[target] = { ...arr[target], value: p.label, lat: p.lat, lon: p.lon };
                 return arr;
               })
             }
@@ -373,7 +374,14 @@ function RouteStep({ stops, setStops, onConfirm }) {
 const SNAPS = { peek: 140, mid: 380, full: 640 };
 const MINI = 56;
 
+const minutes = s => `${Math.max(1, Math.round(s / 60))} min`;
+
 function ItineraryView({ stops, onBack, onSwap, onEdit }) {
+  const { itinerary, loading, error } = useItinerary({
+    from: stops[0],
+    to: stops[stops.length - 1],
+    profile: 'walking',
+  });
   const [saved, setSaved] = useState(false);
   const [snap, setSnap] = useState('mid');
   const [panelH, setPanelH] = useState(SNAPS.mid);
@@ -442,7 +450,13 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
 
   return (
     <div className="relative h-full">
-      <MapView ref={mapRef} className="absolute inset-0 z-0" withRoute withPin />
+      <MapView
+        ref={mapRef}
+        className="absolute inset-0 z-0"
+        withRoute
+        withPin
+        route={itinerary?.geojson ?? null}
+      />
 
       {/* Contrôles carte (zoom/localiser) — flottent juste au-dessus du bottom
           sheet, à sa hauteur courante (peek/mid/full/mini), pour ne jamais
@@ -577,8 +591,17 @@ function ItineraryView({ stops, onBack, onSwap, onEdit }) {
             <span className="font-mono text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-warning-soft text-warning">+05 min</span>
           </div>
 
-          {itinerarySteps.map((s, i) => (
-            <ItineraryStep key={i} {...s} isLast={i === itinerarySteps.length - 1} />
+          {loading && <p className="text-[12px] text-muted">Calcul de l'itinéraire…</p>}
+          {error && <p className="text-[12px] text-red-600">Itinéraire indisponible.</p>}
+          {(itinerary?.steps ?? []).map((s, i, all) => (
+            <ItineraryStep
+              key={i}
+              mode="walk"
+              address={s.instruction}
+              city={`${Math.round(s.distanceM)} m`}
+              duration={minutes(s.durationS)}
+              isLast={i === all.length - 1}
+            />
           ))}
 
           <button
@@ -606,7 +629,9 @@ export default function SearchPage() {
   const [step, setStep] = useState(() => prefill?.from && prefill?.to ? 'route' : 'destination');
   const [query, setQuery] = useState('');
   const [stops, setStops] = useState(() => [
-    { id: 'start', value: prefill?.from ?? 'Maison' },
+    prefill?.from
+      ? { id: 'start', value: prefill.from }
+      : { id: 'start', value: 'Maison', lat: savedPlaces[0].lat, lon: savedPlaces[0].lon },
     { id: 'end',   value: prefill?.to  ?? '' },
   ]);
 
@@ -635,18 +660,23 @@ export default function SearchPage() {
     if (target.kind === 'navigate') {
       navigate(target.to);
     } else {
-      planTo(target.destination.label);
+      planTo(target.destination);
     }
   };
 
   // Action secondaire : n'importe quel résultat géolocalisé peut servir de
   // destination, sans passer par sa fiche.
-  const handlePlanTo = result => planTo(result.label);
+  const handlePlanTo = result => planTo(result);
 
-  const planTo = label => {
+  const planTo = ({ label, coordinates }) => {
     setStops(prev => {
       const arr = [...prev];
-      arr[arr.length - 1] = { ...arr[arr.length - 1], value: label };
+      arr[arr.length - 1] = {
+        ...arr[arr.length - 1],
+        value: label,
+        lat: coordinates?.latitude,
+        lon: coordinates?.longitude,
+      };
       return arr;
     });
     setStep('route');
@@ -656,7 +686,7 @@ export default function SearchPage() {
   const handleSelectSaved = p => {
     setStops(prev => {
       const arr = [...prev];
-      arr[arr.length - 1] = { ...arr[arr.length - 1], value: p.label };
+      arr[arr.length - 1] = { ...arr[arr.length - 1], value: p.label, lat: p.lat, lon: p.lon };
       return arr;
     });
     setStep('route');
