@@ -35,6 +35,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # à CHAQUE démarrage : la même image sert n'importe quel environnement, plus
 # besoin de rebuilder pour changer l'URL de la gateway (voir docker-entrypoint.sh).
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# sed : au cas où le fichier a été checkouté avec des fins de ligne CRLF
+# (core.autocrlf=true côté Windows), sinon le shebang devient "#!/bin/sh\r",
+# introuvable pour Linux ("exec: no such file or directory" trompeur, alors
+# que le fichier existe bel et bien).
+RUN sed -i 's/\r$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 EXPOSE 80
 ENTRYPOINT ["/docker-entrypoint.sh"]

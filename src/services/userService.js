@@ -34,6 +34,25 @@ export const UPDATE_NOTIFICATION_PREFERENCES_MUTATION = gql`
   }
 `;
 
+const UNSUBSCRIBE_FROM_EMAILS_MUTATION = gql`
+  mutation UnsubscribeFromEmails($googleId: String!) {
+    unsubscribeFromEmails(googleId: $googleId)
+  }
+`;
+
+export function useUnsubscribeFromEmails() {
+  const [mutate, { loading, data, error }] = useMutation(
+    UNSUBSCRIBE_FROM_EMAILS_MUTATION,
+  );
+
+  async function unsubscribeFromEmails(googleId) {
+    const result = await mutate({ variables: { googleId } });
+    return Boolean(result?.data?.unsubscribeFromEmails);
+  }
+
+  return { unsubscribeFromEmails, loading, data, error };
+}
+
 export function useCurrentUser(options = {}) {
   const { loading, data, error, refetch } = useQuery(GET_ME_QUERY, {
     errorPolicy: 'all',
